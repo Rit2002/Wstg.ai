@@ -121,6 +121,38 @@ def split_documents(documents: list[Document]) -> list[Document]:
             document.page_content
         )
 
+        if len(sections) >= 2:
+            first = sections[0]
+            second = sections[1]
+
+            # Merge first two documents becoz the the very first chunk contains only id and title so we merge with preceeding section.
+            # The ** operator unpacks dictionary entries into a new dictionary.
+            is_title_id_block = (
+                token_length(first.page_content) < 50
+                and first.metadata.get("h1")
+                and not any(
+                    first.metadata.get(key)
+                    for key in ("h2", "h3", "h4")
+                )
+                and first.metadata.get("h1")
+                == second.metadata.get("h1")
+                and second.metadata.get("h2")
+            )
+
+            if is_title_id_block:
+                merged_section = Document(
+                    page_content=(
+                        first.page_content
+                        +"\n\n"
+                        + second.page_content
+                    ),
+                    metadata={
+                        **first.metadata,
+                        **second.metadata,
+                    },
+                )
+                sections = [merged_section, *sections[2:]]
+
         for section in sections:
 
             # perserves the orginal file's metadata.
