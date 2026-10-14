@@ -3,3 +3,4 @@ wstg
 Questions.md
 .env
 test.py
+__pycache__/

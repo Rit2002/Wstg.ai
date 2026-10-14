@@ -1,4 +1,5 @@
 import os
+import json
 
 from pathlib import Path
 from dotenv import load_dotenv
@@ -126,7 +127,7 @@ def split_documents(documents: list[Document]) -> list[Document]:
             second = sections[1]
 
             # Merge first two documents becoz the the very first chunk contains only id and title so we merge with preceeding section.
-            # The ** operator unpacks dictionary entries into a new dictionary.
+            
             is_title_id_block = (
                 token_length(first.page_content) < 50
                 and first.metadata.get("h1")
@@ -200,8 +201,24 @@ def index_chunks(chunks: list[Document], embedding):
         
 
 
+def save_chunks(chunks, output_path="data/wstg_chunks.jsonl"):
+    output = Path(output_path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+
+    with output.open("w", encoding="utf-8") as file:
+        for chunk in chunks:
+            record = {
+                "page_content": chunk.page_content,
+                "metadata": chunk.metadata,
+            }
+            file.write(json.dumps(record, ensure_ascii=False) + "\n")
+
+    print(f"Saved {len(chunks)} chunks to {output}")
+
+
 documents = load_files()
 chunks = split_documents(documents)
+save_chunks(chunks)
 index_chunks(chunks, embedding)
 
 print("Indexing complete.")
