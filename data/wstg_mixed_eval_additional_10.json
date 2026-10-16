@@ -1,0 +1,104 @@
+{
+  "dataset_name": "OWASP WSTG Error Handling, Cryptography, and Business Logic Evaluation - Additional 10 Questions",
+  "category": "Error Handling, Cryptography, Business Logic",
+  "k": 5,
+  "relevance_unit": "source",
+  "notes": [
+    "Additional source-level retrieval evaluation set based only on the supplied OWASP WSTG Markdown files.",
+    "Relevant sources are exact Markdown filenames from the supplied corpus.",
+    "WSTG-ERRH-02 content states that stack-trace testing has been merged into Testing for Improper Error Handling; therefore stack-trace questions use that merged source.",
+    "Use unique retrieved source filenames when computing source-level metrics so duplicate chunks from the same source do not inflate relevance."
+  ],
+  "queries": [
+    {
+      "id": "WSTG-MIX-EVAL-031",
+      "wstg_id": "WSTG-ERRH-01",
+      "question": "How can a tester identify improper error handling in a web application, and what information can leaked errors reveal about the underlying system?",
+      "reference_answer": "Trigger unexpected inputs and edge cases, inspect error responses from both the web server and application, and look for stack traces, memory dumps, framework or version details, internal service information, and inconsistent error behavior. Such output can help map the application stack and internal service relationships.",
+      "relevant_sources": [
+        "01-Testing_For_Improper_Error_Handling.md"
+      ]
+    },
+    {
+      "id": "WSTG-MIX-EVAL-032",
+      "wstg_id": "WSTG-ERRH-02",
+      "question": "When testing for stack-trace exposure, what kinds of unexpected input or request conditions should be tested, and what should be inspected in the response?",
+      "reference_answer": "The supplied WSTG page says stack-trace testing has been merged into Testing for Improper Error Handling. Test unexpected data types, malformed JSON or headers, unusually large inputs, invalid paths, and other edge cases, then inspect responses for stack traces, exceptions, internal implementation details, and differences in error behavior.",
+      "relevant_sources": [
+        "01-Testing_For_Improper_Error_Handling.md"
+      ]
+    },
+    {
+      "id": "WSTG-MIX-EVAL-033",
+      "wstg_id": "WSTG-CRYP-01",
+      "question": "What certificate properties should be reviewed when testing a web application's TLS configuration?",
+      "reference_answer": "Review certificate key strength, signature algorithm, validity period, trust chain, and whether the Subject Alternative Name matches the hostname. The supplied guidance specifies at least a 2048-bit key and SHA-256 or stronger signature algorithm, and warns against legacy MD5 or SHA-1 signatures.",
+      "relevant_sources": [
+        "01-Testing_for_Weak_Transport_Layer_Security.md"
+      ]
+    },
+    {
+      "id": "WSTG-MIX-EVAL-034",
+      "wstg_id": "WSTG-CRYP-01",
+      "question": "Which legacy TLS protocols, cipher suites, and TLS features does the WSTG page identify as potential weaknesses during server-configuration testing?",
+      "reference_answer": "The page lists SSLv2, SSLv3, TLS 1.0, EXPORT and NULL cipher suites, anonymous ciphers, RC4, CBC-mode ciphers, TLS compression, and weak Diffie-Hellman ephemeral keys as examples of legacy or potentially weak configurations.",
+      "relevant_sources": [
+        "01-Testing_for_Weak_Transport_Layer_Security.md"
+      ]
+    },
+    {
+      "id": "WSTG-MIX-EVAL-035",
+      "wstg_id": "WSTG-CRYP-02",
+      "question": "What response differences may indicate a padding oracle, and what behavior should a secure implementation expose instead?",
+      "reference_answer": "A padding oracle may be indicated by distinguishable padding errors, other decryption errors, response differences, or timing side channels for manipulated ciphertext. The page says a secure implementation should verify ciphertext integrity and handle decryption failures uniformly, exposing only a generic success or failure outcome without revealing internal error states.",
+      "relevant_sources": [
+        "02-Testing_for_Padding_Oracle.md"
+      ]
+    },
+    {
+      "id": "WSTG-MIX-EVAL-036",
+      "wstg_id": "WSTG-CRYP-03",
+      "question": "Which types of sensitive information should a tester look for in traffic sent over unencrypted channels, and what examples of transmission weaknesses does the WSTG describe?",
+      "reference_answer": "Check whether credentials, PINs, session identifiers, tokens, cookies, personal identifying information, financial data, healthcare information, or student information travel over unencrypted channels. Examples include Basic Authentication or form credentials over HTTP and session cookies lacking the Secure flag that are subsequently sent over HTTP.",
+      "relevant_sources": [
+        "03-Testing_for_Sensitive_Information_Sent_via_Unencrypted_Channels.md"
+      ]
+    },
+    {
+      "id": "WSTG-MIX-EVAL-037",
+      "wstg_id": "WSTG-CRYP-04",
+      "question": "During source-code review for weak encryption, which algorithm choices, cipher modes, IV practices, and password-hashing parameters should be checked?",
+      "reference_answer": "Search for weak algorithms such as MD5, RC4, DES, SHA-1, and ECB mode; check that AES IVs are random and unpredictable and are not improperly reused; review key sizes and RSA signature padding; and inspect password hashing for a random salt and an adequate iteration count when PBKDF2 is used. The supplied page recommends password-hashing algorithms such as PBKDF2, scrypt, and bcrypt.",
+      "relevant_sources": [
+        "04-Testing_for_Weak_Encryption.md"
+      ]
+    },
+    {
+      "id": "WSTG-MIX-EVAL-038",
+      "wstg_id": "WSTG-BUSL-01",
+      "question": "How is business-logic data validation different from ordinary boundary-value or format validation, and how should it be tested?",
+      "reference_answer": "Business-logic validation checks whether data is logically valid for the application's rules and circumstances, not merely whether it has the right format or range. Review documentation and data-entry or system hand-off points, submit logically invalid values, inspect requests with an intercepting proxy, and verify that server-side checks reject invalid data rather than trusting frontend validation.",
+      "relevant_sources": [
+        "01-Test_Business_Logic_Data_Validation.md"
+      ]
+    },
+    {
+      "id": "WSTG-MIX-EVAL-039",
+      "wstg_id": "WSTG-BUSL-02",
+      "question": "How can forged HTTP requests bypass an application's intended business workflow, and what should a tester inspect to find these weaknesses?",
+      "reference_answer": "A tester can inspect captured GET and POST requests for predictable parameters, hidden fields, or undocumented options such as debug functionality, then test whether changing or replaying them bypasses workflow rules. Examples in the page include reusing a one-time discount or manipulating hidden game-related controls. The application should enforce workflow rules server-side.",
+      "relevant_sources": [
+        "02-Test_Ability_to_Forge_Requests.md"
+      ]
+    },
+    {
+      "id": "WSTG-MIX-EVAL-040",
+      "wstg_id": "WSTG-BUSL-03",
+      "question": "Why must a web application not trust hidden fields or non-editable controls for business decisions, and what integrity checks should be tested?",
+      "reference_answer": "Hidden fields, dropdowns, and non-editable controls can be modified through a proxy even if the browser UI prevents editing. Test whether the server validates submitted values against user permissions and business rules, whether users can read or modify data they should not access, and whether system artifacts such as logs can be read, changed, or deleted without authorization.",
+      "relevant_sources": [
+        "03-Test_Integrity_Checks.md"
+      ]
+    }
+  ]
+}

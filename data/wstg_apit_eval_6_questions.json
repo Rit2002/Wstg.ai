@@ -1,0 +1,67 @@
+{
+  "dataset_name": "OWASP WSTG API Testing Evaluation - Additional 6 Questions",
+  "category": "API Testing",
+  "k": 5,
+  "relevance_unit": "source",
+  "notes": [
+    "Additional source-level retrieval evaluation set based only on the supplied OWASP WSTG Markdown file for WSTG-APIT-01 (Testing GraphQL).",
+    "Only one source file was supplied, so all questions target different sections of the same source; relevant sources are the exact Markdown filename from the supplied corpus.",
+    "Use unique retrieved source filenames when computing source-level metrics so duplicate chunks from the same source do not inflate relevance."
+  ],
+  "queries": [
+    {
+      "id": "WSTG-MIX-EVAL-060",
+      "wstg_id": "WSTG-APIT-01",
+      "question": "How can a tester use introspection to map a GraphQL deployment, and what tools can visualize or document the extracted schema?",
+      "reference_answer": "A tester can send a native introspection query through a proxy to retrieve the full schema, including query, mutation and subscription types, data types and directives. GraphQL Voyager can turn the schema into an entity relationship diagram, though it does not show mutations, so it should be combined with other methods. GraphiQL, if exposed, and GraphQL Playground can generate documentation from the schema; Playground does not need GraphiQL to be available, supports custom headers for testing different permission levels, and can export schemas for Voyager. Because introspection also helps attackers, access to it should be restricted rather than necessarily disabled, since some tools may break.",
+      "relevant_sources": [
+        "01-Testing_GraphQL.md"
+      ]
+    },
+    {
+      "id": "WSTG-MIX-EVAL-061",
+      "wstg_id": "WSTG-APIT-01",
+      "question": "How should a tester look for authorization flaws in a GraphQL API, and what does the example application's auth query demonstrate?",
+      "reference_answer": "GraphQL does not enforce permissions by default, so the application must perform authorization. The tester uses the schema from introspection to find queries exposing sensitive data, such as an auth query that returns API tokens, and then sends queries that should be blocked for insufficient privileges, using multiple sessions or headers with different permissions. In the example application any user, even unauthenticated, can obtain every veterinarian's auth token and use a token they do not own to read or change another veterinarian's data, such as dogs, via queries and mutations, showing broken access control.",
+      "relevant_sources": [
+        "01-Testing_GraphQL.md"
+      ]
+    },
+    {
+      "id": "WSTG-MIX-EVAL-062",
+      "wstg_id": "WSTG-APIT-01",
+      "question": "How do injection vulnerabilities such as SQL injection and XSS appear in GraphQL, and why are scalar types good test candidates?",
+      "reference_answer": "GraphQL is an API layer that usually forwards requests to a back end or database, so it changes only the entry point of familiar payloads such as SQL injection, command injection and XSS. In the example, the namePrefix argument of the dogs query is concatenated into a SQL query, allowing a UNION-based payload to extract values from a configuration table, including the secret that signs JWTs; sqlmap can help automate finding such paths. For XSS, error messages that reflect submitted input can enable reflected XSS. Custom scalars such as DateTime have no out-of-the-box validation, making them good targets for testing.",
+      "relevant_sources": [
+        "01-Testing_GraphQL.md"
+      ]
+    },
+    {
+      "id": "WSTG-MIX-EVAL-063",
+      "wstg_id": "WSTG-APIT-01",
+      "question": "How can nested object relationships in a GraphQL schema be abused for denial of service, and what controls limit this?",
+      "reference_answer": "Because object types can reference each other, such as a Dog containing a Veterinary that contains Dogs, an attacker can write deeply nested queries, along with large limits, that behave like recursion and consume CPU, memory or other resources. Remediation includes query timeouts, maximum query depth, maximum query complexity, server-time-based throttling, and query-complexity-based throttling.",
+      "relevant_sources": [
+        "01-Testing_GraphQL.md"
+      ]
+    },
+    {
+      "id": "WSTG-MIX-EVAL-064",
+      "wstg_id": "WSTG-APIT-01",
+      "question": "How do batching attacks work in GraphQL, and why can they evade rate limiting or firewall protections?",
+      "reference_answer": "GraphQL allows multiple queries in one request, either as an array of query objects or as aliased fields in a single query. An attacker can use this to enumerate objects with guessable sequential IDs, such as veterinarian names, and then request many auth tokens in a handful of requests, rather than many individual ones that a web application firewall or rate limiter such as Nginx might block. Batching can also be used to enumerate objects and brute force multi-factor authentication or other sensitive values. Mitigations are object request rate limiting in code, preventing batching for sensitive objects, and limiting the number of queries that can run at once.",
+      "relevant_sources": [
+        "01-Testing_GraphQL.md"
+      ]
+    },
+    {
+      "id": "WSTG-MIX-EVAL-065",
+      "wstg_id": "WSTG-APIT-01",
+      "question": "What risks come from detailed error messages and from GraphQL exposing an underlying API, and what remediation does the guide recommend overall?",
+      "reference_answer": "Detailed error messages can reveal internal details, configuration or data, so testers should fuzz with unexpected input and inspect responses, and servers should return generic errors. When GraphQL translates requests into calls to an older underlying API without proper authorization checks, a parameter like id=1/delete could map to an API path and allow privilege escalation, or the request could run with the GraphQL node's authority instead of the real requester's. Overall remediation includes restricting introspection, input validation (for example with graphql-constraint-directive, which is not sufficient alone), controls against abusive queries, generic error messages, and batching mitigations.",
+      "relevant_sources": [
+        "01-Testing_GraphQL.md"
+      ]
+    }
+  ]
+}

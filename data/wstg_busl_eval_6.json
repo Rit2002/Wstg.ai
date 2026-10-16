@@ -1,0 +1,67 @@
+{
+  "dataset_name": "OWASP WSTG Business Logic Evaluation - Additional 6 Questions",
+  "category": "Business Logic",
+  "k": 5,
+  "relevance_unit": "source",
+  "notes": [
+    "Additional source-level retrieval evaluation set based only on the supplied OWASP WSTG Markdown files (WSTG-BUSL-04 to WSTG-BUSL-09).",
+    "Relevant sources are exact Markdown filenames from the supplied corpus.",
+    "Use unique retrieved source filenames when computing source-level metrics so duplicate chunks from the same source do not inflate relevance."
+  ],
+  "queries": [
+    {
+      "id": "WSTG-MIX-EVAL-041",
+      "wstg_id": "WSTG-BUSL-04",
+      "question": "How can process timing leak information or let attackers abuse a business process, and how should a tester approach these timing-based misuse cases?",
+      "reference_answer": "Differences in processing time can reveal what happens in background processes, for example a login that takes longer to reject a valid username with a wrong password than an invalid username, or a slot machine that takes longer before a large payout. Attackers can also keep sessions or reservations open, such as holding ticket seats or delaying a purchase quoted at an earlier market price. The tester should identify time-dependent processes, draw the process flow and injection points, prepare and preferably automate requests because tools measure timing more precisely, and analyze differences in execution against the intended business logic. Remediation is to equalize response times and cancel or reset transactions after a set time.",
+      "relevant_sources": [
+        "04-Test_for_Process_Timing.md"
+      ]
+    },
+    {
+      "id": "WSTG-MIX-EVAL-042",
+      "wstg_id": "WSTG-BUSL-05",
+      "question": "How should a tester check that functions with usage limits, such as one-time discounts, cannot be executed more times than allowed, and how should the limits be enforced?",
+      "reference_answer": "Review documentation and use exploratory testing to find functions that should run only once or a fixed number of times, then build misuse cases that exceed the limit, such as navigating back and forth between pages to re-run a function, reapplying the same discount, taking a second discount after the allowed one, or loading and unloading shopping carts for extra discounts. The application should enforce hard controls, such as invalidating a coupon at the database level or keeping a per-user counter on the back end tied to the session.",
+      "relevant_sources": [
+        "05-Test_Number_of_Times_a_Function_Can_Be_Used_Limits.md"
+      ]
+    },
+    {
+      "id": "WSTG-MIX-EVAL-043",
+      "wstg_id": "WSTG-BUSL-06",
+      "question": "What kinds of workflow circumvention should be tested, and what should happen to side effects when a transaction is cancelled or content is edited after initial validation?",
+      "reference_answer": "Testers should look for ways to skip steps or perform them out of order. One method is to start a transaction past the point where loyalty points or credits are granted, then cancel or reduce the final tender and verify the points are rolled back. Another is to save valid content on a bulletin board or CMS and then edit it into an invalid state, such as adding words from a profanity deny list that was only checked on the initial post. The application must enforce correct step order and roll back or cancel spawned actions when a workflow is not completed.",
+      "relevant_sources": [
+        "06-Testing_for_the_Circumvention_of_Work_Flows.md"
+      ]
+    },
+    {
+      "id": "WSTG-MIX-EVAL-044",
+      "wstg_id": "WSTG-BUSL-07",
+      "question": "Why are localized security controls insufficient against application misuse, and what application-wide defensive responses should a tester look for?",
+      "reference_answer": "Localized per-function defenses, such as rejecting certain characters or temporarily locking an account after failed logins, do not cover general misuse like forced browsing, bypassing client-side validation, repeated access control errors, duplicated or missing parameters, malformed JSON or XML, blatant XSS or SQL injection payloads, automation-speed usage, geo-location or user agent changes, out-of-order business processes, and high rates of function use. A tester should note changed responses, blocked requests, and forced logouts or lockouts across all tests. Appropriate application-wide responses include disabling critical functionality, requiring additional authentication, adding time delays, and recording extra request data. If none is observed the tester should report no active defenses, noting that responses may be silent, such as logging changes or admin alerts.",
+      "relevant_sources": [
+        "07-Test_Defenses_Against_Application_Misuse.md"
+      ]
+    },
+    {
+      "id": "WSTG-MIX-EVAL-045",
+      "wstg_id": "WSTG-BUSL-08",
+      "question": "What checks should a tester perform to verify that an upload feature rejects unapproved file types and does not rely on weak validation?",
+      "reference_answer": "Study the application's logical requirements, prepare a library of non-approved files such as jsp, exe, or HTML containing script, and submit them to the upload mechanism to confirm they are rejected. Check whether validation happens only in client-side JavaScript, only by the Content-Type header, or only by file extension. Also check whether uploaded files can be accessed directly by URL, whether they can contain code or script injection, and whether file path checking exists, since ZIP archives with crafted paths could extract to unintended locations. The risk is that an unexpected file, such as a PHP file in a picture-sharing app, may be moved to a final location where it can execute.",
+      "relevant_sources": [
+        "08-Test_Upload_of_Unexpected_File_Types.md"
+      ]
+    },
+    {
+      "id": "WSTG-MIX-EVAL-046",
+      "wstg_id": "WSTG-BUSL-09",
+      "question": "Beyond file extension checks, how should a tester evaluate an upload feature for malicious file contents, including filter evasion, malware scanning, and archive or XML risks?",
+      "reference_answer": "The tester should first determine what filters exist and whether they are client-side, which an intercepting proxy trivially bypasses, or server-side, where evasion techniques include altering Content-Type, using uncommon or differently capitalized extensions, and trailing characters or null bytes. For contents, the EICAR test file checks whether anti-malware scanning is in place, and other formats need review for risks such as Office macros, malicious PDF JavaScript, and CSV injection. Archives should be tested for directory traversal (zip slip) and decompression bombs, only with written approval because of denial-of-service and cost risks, and XML files for XXE and billion laughs attacks. Web shells uploaded for testing must be protected, for example with random names, and removed afterward.",
+      "relevant_sources": [
+        "09-Test_Upload_of_Malicious_Files.md"
+      ]
+    }
+  ]
+}

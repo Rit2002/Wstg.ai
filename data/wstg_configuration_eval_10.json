@@ -1,0 +1,104 @@
+{
+  "dataset_name": "OWASP WSTG Configuration and Deployment Retrieval Evaluation",
+  "category": "configuration_and_deployment",
+  "k": 5,
+  "relevance_unit": "source",
+  "notes": [
+    "Ten evaluation questions grounded in the provided OWASP WSTG configuration and deployment Markdown files.",
+    "relevant_sources contains the Markdown filename(s) considered relevant for retrieval evaluation.",
+    "Review the questions, reference answers, and source labels before treating the metrics as a final benchmark."
+  ],
+  "queries": [
+    {
+      "id": "WSTG-CONF-EVAL-001",
+      "wstg_id": "WSTG-CONF-01",
+      "question": "What should a tester review when assessing web infrastructure configuration, including administrative interfaces?",
+      "reference_answer": "Map the infrastructure components and how they interact with the application, review components for known vulnerabilities and unsupported versions, check the tools and interfaces used to administer them, verify authentication controls and default credentials, and maintain a controlled list of required ports. Administrative interfaces should be identified through directory and file enumeration, source-code comments and links, documentation, public information, alternate ports, and relevant parameters or cookies; then verify that access is restricted to authorized administrators.",
+      "relevant_sources": [
+        "01-Test_Network_Infrastructure_Configuration.md",
+        "05-Enumerate_Infrastructure_and_Application_Admin_Interfaces.md"
+      ]
+    },
+    {
+      "id": "WSTG-CONF-EVAL-002",
+      "wstg_id": "WSTG-CONF-02",
+      "question": "Which application platform configuration weaknesses should be checked before a web application is considered securely configured?",
+      "reference_answer": "Check that default or sample files and applications have been removed, debugging code and unnecessary modules are not enabled in production, server errors do not expose code or internal details, and the server runs with minimized privileges. Review logging for sensitive data, storage, rotation, retention, review, backup, and denial-of-service risks. Configuration files and shared configuration resources should have appropriately restricted permissions, and sensitive information should be protected.",
+      "relevant_sources": [
+        "02-Test_Application_Platform_Configuration.md"
+      ]
+    },
+    {
+      "id": "WSTG-CONF-EVAL-003",
+      "wstg_id": "WSTG-CONF-03",
+      "question": "Why should a tester request files with different extensions, and which extensions deserve particular scrutiny for sensitive information exposure?",
+      "reference_answer": "Different extensions can cause a server to return a file as plain text, download it, or execute it, revealing technologies or exposing source code and credentials if handling is misconfigured. Test extensions on a per-directory basis and account for differences between load-balanced servers. Extensions needing particular scrutiny include .asa, .inc, and .config, as well as archives such as .zip and .tar, text and document files, source files such as .java, and backup variants such as .bak, .old, and editor-generated backup files.",
+      "relevant_sources": [
+        "03-Test_File_Extensions_Handling_for_Sensitive_Information.md"
+      ]
+    },
+    {
+      "id": "WSTG-CONF-EVAL-004",
+      "wstg_id": "WSTG-CONF-04",
+      "question": "How can old, backup, and unreferenced files expose sensitive information, and what clues can help a tester find them?",
+      "reference_answer": "Such files may expose server-side source code, credentials, configuration details, internal paths, logs, obsolete vulnerable code, administrative functionality, or whole backup archives. Testers can infer likely filenames from naming conventions, spider published content, inspect HTML and JavaScript comments and links, review forms and robots.txt, and look for backup extensions, copied files, archives, and snapshots. Findings should be analyzed for sensitive information and unintended functionality.",
+      "relevant_sources": [
+        "04-Review_Old_Backup_and_Unreferenced_Files_for_Sensitive_Information.md"
+      ]
+    },
+    {
+      "id": "WSTG-CONF-EVAL-005",
+      "wstg_id": "WSTG-CONF-06",
+      "question": "How should a tester determine whether HTTP methods are unnecessarily enabled or can bypass access controls?",
+      "reference_answer": "Use OPTIONS as an initial indication of supported methods, then verify behavior by sending requests with different methods to relevant endpoints; tools such as Nmap's http-methods script can help. Confirm that each endpoint accepts only required methods. Check whether PUT allows unauthorized file creation, whether methods such as HEAD or POST return protected content without the normal login redirect, whether TRACE is enabled and reflects request headers, and whether method overriding creates access-control bypasses. Testing must be authorized and avoid leaving test files behind.",
+      "relevant_sources": [
+        "06-Test_HTTP_Methods.md"
+      ]
+    },
+    {
+      "id": "WSTG-CONF-EVAL-006",
+      "wstg_id": "WSTG-CONF-07",
+      "question": "What does the Strict-Transport-Security response header do, and which directives should be reviewed during testing?",
+      "reference_answer": "HTTP Strict Transport Security (HSTS) tells a browser to access the specified domain over HTTPS instead of unencrypted HTTP and helps prevent users from bypassing certificate errors. Review the Strict-Transport-Security header and its validity, including max-age, which specifies how long the policy is applied; includeSubDomains, which extends the policy to subdomains; and preload, which relates to browser preload lists. The header can be checked in an HTTPS response using an intercepting proxy or curl.",
+      "relevant_sources": [
+        "07-Test_HTTP_Strict_Transport_Security.md"
+      ]
+    },
+    {
+      "id": "WSTG-CONF-EVAL-007",
+      "wstg_id": "WSTG-CONF-08",
+      "question": "How can overly permissive RIA cross-domain policy files create security risks, and how should they be assessed?",
+      "reference_answer": "Files such as crossdomain.xml and clientaccesspolicy.xml can permit clients to access resources across domains. Overly broad settings, especially wildcard domains, unrestricted headers, or insecure access, may enable cross-site request forgery or expose data intended to be protected by cross-origin restrictions. Retrieve policy files from the application root and discovered folders, list those found, and assess whether allowed domains, ports, protocols, headers, and policy-file permissions follow least privilege.",
+      "relevant_sources": [
+        "08-Test_RIA_Cross_Domain_Policy.md"
+      ]
+    },
+    {
+      "id": "WSTG-CONF-EVAL-008",
+      "wstg_id": "WSTG-CONF-09",
+      "question": "Which files and directories should be prioritized when reviewing file permissions, and what is the security objective?",
+      "reference_answer": "Review web files and directories, configuration files, sensitive data such as passwords, keys and encrypted data, logs, executable scripts and binaries, database files, temporary files, and upload directories. The objective is to identify permissions that give broader access than required, which could expose sensitive information or allow unauthorized modification. On Linux, commands such as ls and namei -l can help inspect permissions. Permissions should be restricted so unauthorized users cannot unnecessarily access critical resources.",
+      "relevant_sources": [
+        "09-Test_File_Permission.md"
+      ]
+    },
+    {
+      "id": "WSTG-CONF-EVAL-009",
+      "wstg_id": "WSTG-CONF-10",
+      "question": "What conditions make a subdomain takeover possible, and which DNS findings warrant further investigation?",
+      "reference_answer": "A takeover may be possible when a DNS record points to a missing or inactive external resource and the service provider does not properly verify ownership. Enumerate current and historical domains and DNS records, identify records pointing to unused services, and investigate responses such as NXDOMAIN, SERVFAIL, or REFUSED. Check relevant A, CNAME, and NS records and whether the referenced service or domain is still active. Remove vulnerable DNS records and periodically monitor them.",
+      "relevant_sources": [
+        "10-Test_for_Subdomain_Takeover.md"
+      ]
+    },
+    {
+      "id": "WSTG-CONF-EVAL-010",
+      "wstg_id": "WSTG-CONF-11",
+      "question": "How should a tester assess whether cloud storage is exposing data or allowing unauthorized changes?",
+      "reference_answer": "Identify the cloud-storage URL from HTTP messages, source code, documentation, or other available information. Test whether an unauthorized user can read an object or upload an arbitrary file, and assess access-control settings on the storage service and individual objects. For Amazon S3, bucket URLs may use virtual-hosted or path-style formats; the AWS CLI can be used to check listing, upload, and removal behavior where authorized. The goal is to confirm that storage permissions prevent unauthorized reading, uploading, modification, or deletion.",
+      "relevant_sources": [
+        "11-Test_Cloud_Storage.md"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,104 @@
+{
+  "dataset_name": "OWASP WSTG Information Gathering Retrieval Evaluation",
+  "category": "information_gathering",
+  "k": 5,
+  "relevance_unit": "source",
+  "notes": [
+    "Questions and reference answers are grounded in the provided OWASP WSTG Markdown files.",
+    "relevant_sources contains the Markdown filename(s) considered relevant for retrieval evaluation.",
+    "WSTG-INFO-09 is a redirect/merged page. Its question checks that retrieval can identify the canonical WSTG-INFO-08 page."
+  ],
+  "queries": [
+    {
+      "id": "WSTG-INFO-EVAL-001",
+      "wstg_id": "WSTG-INFO-01",
+      "question": "How can search engines be used during web application reconnaissance to identify information that may have been unintentionally exposed?",
+      "reference_answer": "Search engines can reveal indexed pages and cached content, including sensitive design or configuration details, usernames, credentials, error messages, cloud configuration files, and development or staging sites. Testers should use multiple search engines and search operators such as site:, inurl:, intitle:, intext:, and filetype:, and consider indirect sources such as forums or public posts.",
+      "relevant_sources": [
+        "01-Conduct_Search_Engine_Discovery_Reconnaissance_for_Information_Leakage(1).md"
+      ]
+    },
+    {
+      "id": "WSTG-INFO-EVAL-002",
+      "wstg_id": "WSTG-INFO-02",
+      "question": "What techniques can a tester use to identify the type and version of a web server?",
+      "reference_answer": "Techniques include banner grabbing by examining HTTP response headers, sending malformed requests and analyzing error responses or default error pages, and using automated tools that compare responses with known server signatures. Examples of tools listed in the guide include Netcraft, Nikto, and Nmap. Fingerprinting helps identify potentially vulnerable server versions.",
+      "relevant_sources": [
+        "02-Fingerprint_Web_Server(1).md"
+      ]
+    },
+    {
+      "id": "WSTG-INFO-EVAL-003",
+      "wstg_id": "WSTG-INFO-03",
+      "question": "What web server metadata files or directives should be reviewed to discover hidden paths and application functionality?",
+      "reference_answer": "Review metadata resources such as robots.txt, HTML robots META tags, and sitemap.xml. These can expose paths, functionality, technology details, or areas that crawlers are told to avoid. The robots.txt Disallow directive is not an access-control mechanism because crawlers may ignore it. Other META tags may reveal technology or application information.",
+      "relevant_sources": [
+        "03-Review_Webserver_Metafiles_for_Information_Leakage.md"
+      ]
+    },
+    {
+      "id": "WSTG-INFO-EVAL-004",
+      "wstg_id": "WSTG-INFO-04",
+      "question": "What factors can cause multiple web applications to exist behind the same IP address or DNS name, and how can testers discover them?",
+      "reference_answer": "Applications may use different base URLs or non-obvious paths, non-standard TCP ports, or virtual hosts that share an IP address. Testers can use directory browsing where available, search engines, likely-URL dictionary searches, reverse-IP or DNS-related services, and port scanning with service detection to identify applications within the agreed assessment scope.",
+      "relevant_sources": [
+        "04-Enumerate_Applications_on_Webserver(1).md"
+      ]
+    },
+    {
+      "id": "WSTG-INFO-EVAL-005",
+      "wstg_id": "WSTG-INFO-05",
+      "question": "What kinds of information should testers look for when reviewing webpage source, JavaScript, and source maps for information leakage?",
+      "reference_answer": "Review HTML comments and metadata for debugging details, SQL statements, usernames, passwords, internal IP addresses, and other internal information. Inspect client-side JavaScript for API keys, credentials, internal addresses, and hidden routes. Check whether source map or other debug files are exposed because they can make original source code easier to inspect.",
+      "relevant_sources": [
+        "05-Review_Webpage_Content_for_Information_Leakage.md"
+      ]
+    },
+    {
+      "id": "WSTG-INFO-EVAL-006",
+      "wstg_id": "WSTG-INFO-06",
+      "question": "Which request and response details should be recorded when identifying web application entry points?",
+      "reference_answer": "Record HTTP methods such as GET and POST, URL and query-string parameters, POST body and hidden form fields, custom headers, cookies, redirects, status codes including 403 and 500, TLS usage, authentication state, multi-step workflows, WebSocket use, and other relevant request or response details. An intercepting proxy and spreadsheet can help track this information.",
+      "relevant_sources": [
+        "06-Identify_Application_Entry_Points.md"
+      ]
+    },
+    {
+      "id": "WSTG-INFO-EVAL-007",
+      "wstg_id": "WSTG-INFO-07",
+      "question": "What approaches can be used to map execution paths and understand an application's principal workflows before security testing?",
+      "reference_answer": "Testers should document discovered links, URLs, workflows, decision points, and significant code paths. Coverage approaches include path testing with decision and boundary-value analysis, data-flow or taint analysis, and race testing. Automatic spidering tools such as OWASP ZAP can help discover resources; code review and application-owner input can improve coverage.",
+      "relevant_sources": [
+        "07-Map_Execution_Paths_Through_Application.md"
+      ]
+    },
+    {
+      "id": "WSTG-INFO-EVAL-008",
+      "wstg_id": "WSTG-INFO-08",
+      "question": "Which indicators can help identify the framework or components used by a web application, and why should multiple indicators be checked?",
+      "reference_answer": "Framework indicators include HTTP headers such as X-Powered-By or X-Generator, framework-specific cookies, HTML source comments and paths, script variables, file and directory structures, file extensions, and error messages. A single indicator may be removed or changed, so checking several markers improves identification accuracy.",
+      "relevant_sources": [
+        "08-Fingerprint_Web_Application_Framework.md"
+      ]
+    },
+    {
+      "id": "WSTG-INFO-EVAL-009",
+      "wstg_id": "WSTG-INFO-09",
+      "question": "Where was the WSTG-INFO-09 Fingerprint Web Application content moved, according to the provided Markdown page?",
+      "reference_answer": "The provided WSTG-INFO-09 page states that its content has been merged into Fingerprint Web Application Framework, WSTG-INFO-08.",
+      "relevant_sources": [
+        "09-Fingerprint_Web_Application.md",
+        "08-Fingerprint_Web_Application_Framework.md"
+      ]
+    },
+    {
+      "id": "WSTG-INFO-EVAL-010",
+      "wstg_id": "WSTG-INFO-10",
+      "question": "How can a tester infer components such as firewalls, reverse proxies, load balancers, application servers, and back-end databases when mapping a web application's architecture?",
+      "reference_answer": "The tester should combine information from network scans and responses. Filtering or ICMP behavior may indicate a firewall; server banners, differing error responses, blocked methods, or response timing may suggest a reverse proxy or cache; differences across repeated requests and cookies such as BIGipServer may indicate load balancing; response headers and session cookies such as JSESSIONID may reveal application servers. Dynamic content and observed identifiers or vulnerabilities may provide clues about back-end databases.",
+      "relevant_sources": [
+        "10-Map_Application_Architecture.md"
+      ]
+    }
+  ]
+}

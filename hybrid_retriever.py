@@ -1,3 +1,16 @@
+"""
+Total: 88 + 25 questions
+OWASP WSTG retrieval pipeline.
+
+Provides:
+- retrieve_stages(): returns ranked chunks from BM25, Pinecone, RRF, and Cohere.
+- hybrid_retrieve(): backward-compatible production entry point returning final chunks.
+
+Evaluation is source-file-level because the current evaluation dataset labels relevant_sources.
+The result files still retain the top-k chunks and their metadata.
+"""
+
+
 import os
 import json
 import re
@@ -9,7 +22,7 @@ from langchain_core.documents import Document
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_pinecone import PineconeVectorStore
 from utils import document_key
-from reranker import cohere_rerank
+from reranker import cohere_rerank_with_status
 
 
 load_dotenv()
@@ -49,12 +62,6 @@ CORPUS_PATH = Path("data/wstg_chunks.jsonl")
 RRF_K = 60
 
 
-# Vector Search
-def retrieve_with_scores(query: str, k: int = 3):
-    return vector_store.similarity_search_with_score(
-        query=query,
-        k=k,
-    )
 
 
 
@@ -129,6 +136,27 @@ bm25 = BM25Okapi(
 
 
 
+
+def is_reference_section(doc: Document) -> bool:
+    """Return True if any segment of the heading path is 'References'."""
+    heading_path = str(doc.metadata.get("heading_path", ""))
+    return any(
+        part.strip().lower() == "references"
+        for part in heading_path.split(">")
+    )
+
+
+
+
+
+def remove_reference_sections(ranking: list[Document]) -> list[Document]:
+    return [doc for doc in ranking if not is_reference_section(doc)]
+
+
+
+
+
+
 def reciprocal_rank_fusion(
         rankings: list[list[Document]],
         k: int = RRF_K
@@ -136,14 +164,14 @@ def reciprocal_rank_fusion(
     """Combine ranked lists using Reciprocal Rank Fusion."""
     
     # fused_scores stores the final RRF score for each unique document.
-    fused_scores = {}
+    fused_scores: dict[str, float] = {}
     # documents_by_key stores the actual Document object associated with each key.
-    documents_by_key = {}
+    documents_by_key: dict[str, Document] = {}
 
     for ranking in rankings:
 
         # Creates an empty set to track documents already encountered in the current ranking.
-        seen_in_ranking = set()
+        seen_in_ranking: set[str] = set()
 
         for rank, doc in enumerate(ranking, start=1):
             key = document_key(doc)
@@ -171,16 +199,22 @@ def reciprocal_rank_fusion(
 
 
 # Hybrid retrieval: BM25 + dense + RRF
-def hybrid_retrieve(
+def retrieve_stages(
         query: str,
         k: int = 5,
         bm25_k: int = 30,
         vector_k: int = 25,
-        candidate_k: int = 30,
+        candidate_k: int = 20,
 ) -> list[Document]:
     """
-    Retrieve candidates with BM25 and Pinecone,
-    fuse their rankings with RRF, and return the top k chunks.
+    Return top-k chunks for each ablation stage.
+
+    BM25 and Pinecone candidate rankings are fused before reference sections are
+    removed, matching the original hybrid_retrieve() behavior. Standalone
+    baselines are filtered for reference sections before their top-k outputs.
+    Cohere receives the top candidate_k RRF results and returns at most k.
+
+    'cohere_status' is metadata for the experiment runner; it is not a ranking.
     """
      
     if not query or not query.strip():
@@ -189,7 +223,7 @@ def hybrid_retrieve(
     if k < 1 or candidate_k < 1:
         raise ValueError("k and candidate_k must be positive integers.")
 
-    # 1. BM25 keyword retrieval
+    # Stage 1: BM25 keyword retrieval.
     query_tokens = tokenize(query)
     bm25_scores = bm25.get_scores(query_tokens)
 
@@ -201,49 +235,91 @@ def hybrid_retrieve(
         reverse = True
     )[:bm25_k]
 
-    keyword_results = [
+    bm25_candidates = [
         documents[index]
         for index in bm25_indices
         if bm25_scores[index] > 0
     ]
 
-    # 2. Dense semantic retrieval from existing Pinecone vectors
-    dense_results = vector_store.similarity_search(
+
+
+    # Stage 2. Dense semantic retrieval from existing Pinecone vectors
+    vector_candidates = vector_store.similarity_search(
         query=query,
         k=vector_k,
     )
 
-    # 3. Fuse the rankings
-    fused_results = reciprocal_rank_fusion(
-        [keyword_results, dense_results]
+    # Stage 3. Fuse the rankings
+    fused_candidates = reciprocal_rank_fusion(
+        [bm25_candidates, vector_candidates]
+    )
+    # Exclude reference section
+    fused_candidates = remove_reference_sections(
+        fused_candidates
     )
 
-    # 4. Exclude reference sections
-    filtered_results = [
-        doc
-        for doc in fused_results
-        if not any(
-            part.strip().lower() == "references"
-            for part in doc.metadata.get("heading_path", "").split(">")
+   
+
+    # Apply the same reference-section exclusion to the individual baselines.
+    bm25_output = remove_reference_sections(bm25_candidates)[:k]
+    vector_output = remove_reference_sections(vector_candidates)[:k]
+    rrf_output = fused_candidates[:k]
+
+    
+
+    # Stage 4: Cohere reranking over the top candidate_k fused candidates.
+    rerank_candidates = fused_candidates[:candidate_k]
+    if not rerank_candidates:
+        reranked_output = []
+        cohere_status = {
+            "status": "skipped",
+            "reason": "no_candidates",
+            "model": os.getenv("COHERE_RERANK_MODEL", "rerank-v3.5"),
+        }
+    elif len(rerank_candidates) <= k:
+        # Preserve the production behavior: no API call when reranking cannot
+        # change the returned top-k list.
+        reranked_output = rerank_candidates[:k]
+        cohere_status = {
+            "status": "skipped",
+            "reason": "candidate_count_not_greater_than_k",
+            "model": os.getenv("COHERE_RERANK_MODEL", "rerank-v3.5"),
+        }
+    else:
+        reranked_output, cohere_status = cohere_rerank_with_status(
+            query=query,
+            candidates=rerank_candidates,
+            top_n=k,
         )
-    ]
 
-    # 5. Prepare query-document pairs for the cross-encoder
-    candidates = filtered_results[:candidate_k]
-
-    if not candidates:
-        return []
-    
-
-    # Nothing to choose between, so skip the API call   
-    if len(candidates) <= k:
-        return candidates
-    
-
-    # 6. Rerank candidates by cross-encoder score
-    return cohere_rerank(query, candidates, top_n=k)
+    return {
+        "bm25": bm25_output,
+        "pinecone_vector": vector_output,
+        "hybrid_rrf": rrf_output,
+        "hybrid_rrf_cohere": reranked_output[:k],
+        "cohere_status": cohere_status,
+    }
 
     
 
 
+# Returns the final result are ranking by cohere
+def hybrid_retrieve(
+    query: str,
+    k: int = 5,
+    bm25_k: int = 30,
+    vector_k: int = 25,
+    candidate_k: int = 20,
+) -> list[Document]:
+    """
+    Backward-compatible production function: return final hybrid + Cohere chunks.
+    Existing callers can continue using hybrid_retrieve(query, k=5).
+    """
+    return retrieve_stages(
+        query=query,
+        k=k,
+        bm25_k=bm25_k,
+        vector_k=vector_k,
+        candidate_k=candidate_k,
+    )["hybrid_rrf_cohere"]
 

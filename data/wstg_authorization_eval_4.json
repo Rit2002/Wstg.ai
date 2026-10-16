@@ -1,0 +1,49 @@
+{
+  "dataset_name": "OWASP WSTG Authorization Testing Evaluation",
+  "category": "Authorization Testing",
+  "k": 5,
+  "relevance_unit": "source",
+  "notes": [
+    "Four evaluation questions grounded in the four supplied OWASP WSTG Markdown files.",
+    "Relevant source labels use the uploaded filenames exactly. If the ingestion pipeline strips duplicate-upload suffixes such as '(1)' or '(2)', update these labels to match the source metadata before evaluation.",
+    "Review the relevance labels against the filenames stored in the indexed corpus before reporting formal metrics."
+  ],
+  "queries": [
+    {
+      "id": "WSTG-ATHZ-EVAL-001",
+      "wstg_id": "WSTG-ATHZ-01",
+      "question": "How should a tester identify and test directory traversal or file inclusion vulnerabilities, including user-controlled parameters, cookies, alternate encodings, and file paths?",
+      "reference_answer": "Enumerate user-controlled inputs such as GET and POST parameters, upload fields, forms, and cookies that may influence file operations. Test whether manipulated paths can access files outside the intended document root or include local or remote files. Consider URL and double encoding, platform-specific path separators, and relevant application behavior. In gray-box testing, inspect file inclusion and filesystem operations and validation logic.",
+      "relevant_sources": [
+        "01-Testing_Directory_Traversal_File_Include(2).md"
+      ]
+    },
+    {
+      "id": "WSTG-ATHZ-EVAL-002",
+      "wstg_id": "WSTG-ATHZ-02",
+      "question": "How can a tester check whether an application improperly allows horizontal or vertical authorization bypass, including access to administrative functions and resources through special request headers?",
+      "reference_answer": "Test horizontal access by using two accounts with the same privileges and attempting to access or operate on each other's resources. Test vertical access by attempting higher-privilege functions with lower-privilege sessions. Check administrative endpoints and resource operations directly rather than relying only on GUI visibility. If relevant, test whether headers such as X-Original-URL or X-Rewrite-URL alter the effective request path and whether proxy-related headers affect access restrictions.",
+      "relevant_sources": [
+        "02-Testing_for_Bypassing_Authorization_Schema(1).md"
+      ]
+    },
+    {
+      "id": "WSTG-ATHZ-EVAL-003",
+      "wstg_id": "WSTG-ATHZ-03",
+      "question": "What application inputs and behaviors should be examined when testing for privilege escalation through role manipulation, profile fields, condition values, IP-related headers, URL checks, or weak session identifiers?",
+      "reference_answer": "Record operations that create, read, modify, or delete data and test whether a user can perform them with another user's privileges. Examine user-group and profile parameters, hidden fields, condition values trusted from the client, IP-related headers, URL authorization checks, and session identifier generation. Determine whether manipulating these values grants functionality or resources beyond the user's intended privileges.",
+      "relevant_sources": [
+        "03-Testing_for_Privilege_Escalation(1).md"
+      ]
+    },
+    {
+      "id": "WSTG-ATHZ-EVAL-004",
+      "wstg_id": "WSTG-ATHZ-04",
+      "question": "How should a tester assess insecure direct object references when user-supplied parameters select database records, trigger operations, retrieve files, or expose application functionality?",
+      "reference_answer": "Map locations where user input directly references an object, such as an invoice identifier, username, file identifier, or menu item. Use multiple test users with different owned resources and, where relevant, different privileges. Change the object reference and check whether the application returns another user's data, performs an unauthorized operation, exposes a file, or grants access to restricted functionality without sufficient authorization checks.",
+      "relevant_sources": [
+        "04-Testing_for_Insecure_Direct_Object_References.md"
+      ]
+    }
+  ]
+}

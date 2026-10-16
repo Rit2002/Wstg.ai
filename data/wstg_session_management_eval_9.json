@@ -1,0 +1,94 @@
+{
+  "dataset_name": "OWASP WSTG Session Management Evaluation",
+  "category": "Session Management",
+  "k": 5,
+  "relevance_unit": "source",
+  "notes": [
+    "Nine questions based on the uploaded OWASP WSTG Session Management Markdown files (WSTG-SESS-01 through WSTG-SESS-09).",
+    "Relevant sources are source filenames and should match the source metadata used by the retrieval pipeline exactly.",
+    "Review relevance labels against the indexed corpus before using the results for formal evaluation."
+  ],
+  "queries": [
+    {
+      "id": "WSTG-SESS-EVAL-001",
+      "wstg_id": "WSTG-SESS-01",
+      "question": "How can a tester determine whether session identifiers are predictable or contain sensitive information, and what properties should a secure session token have?",
+      "reference_answer": "Collect session-token samples for the same and different users, inspect token structure for static fields or encoded information, and compare values across controlled conditions and time. Look for sequential, time-linked, or otherwise predictable patterns and assess whether the token can be reproduced. Secure tokens should be unpredictable, resistant to tampering, appropriately expire, and use the Secure attribute when they carry critical session state.",
+      "relevant_sources": [
+        "01-Testing_for_Session_Management_Schema.md"
+      ]
+    },
+    {
+      "id": "WSTG-SESS-EVAL-002",
+      "wstg_id": "WSTG-SESS-02",
+      "question": "Which cookie attributes should be reviewed during a session-cookie security assessment, and what protections do Secure, HttpOnly, SameSite, Domain, and Path provide?",
+      "reference_answer": "Review cookie attributes and prefixes. Secure restricts cookie transmission to secure channels such as HTTPS; HttpOnly prevents client-side scripts from reading the cookie; SameSite limits when cookies are sent with cross-site requests; Domain controls which hosts receive the cookie; and Path limits the URL paths for which it is sent. Also review expiration and prefixes such as __Host- and __Secure-.",
+      "relevant_sources": [
+        "02-Testing_for_Cookies_Attributes.md"
+      ]
+    },
+    {
+      "id": "WSTG-SESS-EVAL-003",
+      "wstg_id": "WSTG-SESS-03",
+      "question": "What is session fixation, how can a tester check for it, and what should an application do after successful authentication to prevent it?",
+      "reference_answer": "Session fixation occurs when a session identifier chosen or obtained before login remains valid after the user authenticates. A tester compares the session cookies before and after login and can test whether a preselected session identifier still grants access to authenticated functions. The application should invalidate the old session identifier and issue a fresh one after successful authentication; cookie integrity protections and full HSTS adoption can also help in the described threat model.",
+      "relevant_sources": [
+        "03-Testing_for_Session_Fixation.md"
+      ]
+    },
+    {
+      "id": "WSTG-SESS-EVAL-004",
+      "wstg_id": "WSTG-SESS-04",
+      "question": "How should a tester assess whether session identifiers are exposed through transport, request methods, or caching?",
+      "reference_answer": "Inspect requests and responses carrying session IDs, verify that encrypted transport is enforced, and try changing HTTPS to HTTP to identify insecure paths. Review cache directives to prevent session-bearing responses from being stored, including appropriate controls for HTTP/1.0 and HTTP/1.1. Check whether session IDs appear in GET URLs and whether server-side handlers incorrectly accept sensitive POST data through GET requests.",
+      "relevant_sources": [
+        "04-Testing_for_Exposed_Session_Variables.md"
+      ]
+    },
+    {
+      "id": "WSTG-SESS-EVAL-005",
+      "wstg_id": "WSTG-SESS-05",
+      "question": "Why can an authenticated browser be vulnerable to CSRF, and why is using POST requests alone not sufficient protection?",
+      "reference_answer": "CSRF exploits the browser's automatic inclusion of session-related information, such as cookies or HTTP authentication credentials, when sending requests to a site where the user is authenticated. An attacker can induce the browser to submit a known application request without the user's intent. POST alone is not sufficient because cross-site pages can also trigger POST requests; the application needs controls that prevent unauthorized cross-site actions rather than relying only on the request method.",
+      "relevant_sources": [
+        "05-Testing_for_Cross_Site_Request_Forgery.md"
+      ]
+    },
+    {
+      "id": "WSTG-SESS-EVAL-006",
+      "wstg_id": "WSTG-SESS-06",
+      "question": "How can a tester verify that logout actually terminates a session instead of merely clearing or changing the browser cookie?",
+      "reference_answer": "Record the session cookies, log out, then try to access authenticated pages, reload cached pages, and restore the old cookie values to test whether they remain usable. Test security-critical pages and consider single sign-on behavior. A secure implementation invalidates the server-side session so previously issued tokens cannot be replayed to regain authenticated access.",
+      "relevant_sources": [
+        "06-Testing_for_Logout_Functionality.md"
+      ]
+    },
+    {
+      "id": "WSTG-SESS-EVAL-007",
+      "wstg_id": "WSTG-SESS-07",
+      "question": "How should a tester verify session inactivity timeout and determine whether timeout enforcement is performed securely?",
+      "reference_answer": "Log in, wait for increasing intervals, and make requests to authenticated pages to identify when the session expires. After timeout, verify that session tokens are destroyed or unusable and that old tokens cannot restore access. Timeout enforcement should be server-side; client-controlled timestamps or cookie values must not allow a user to extend the session by tampering with them.",
+      "relevant_sources": [
+        "07-Testing_Session_Timeout.md"
+      ]
+    },
+    {
+      "id": "WSTG-SESS-EVAL-008",
+      "wstg_id": "WSTG-SESS-08",
+      "question": "What is session puzzling, and how can it cause authentication bypass or privilege escalation?",
+      "reference_answer": "Session puzzling, also called session variable overloading, occurs when an application reuses the same session variable for different purposes. By visiting entry points in an unexpected order, an attacker may set a value in one context that a privileged page interprets as proof of identity or authorization. Testers enumerate session variables and their contexts, examine sequences of entry and exit points, and use source-code review where possible. Each session variable should have one consistent purpose.",
+      "relevant_sources": [
+        "08-Testing_for_Session_Puzzling.md"
+      ]
+    },
+    {
+      "id": "WSTG-SESS-EVAL-009",
+      "wstg_id": "WSTG-SESS-09",
+      "question": "How can insecure cookie transport and incomplete HSTS deployment enable session hijacking, especially when cookies are scoped to a domain?",
+      "reference_answer": "Session hijacking occurs when an attacker obtains a user's session cookie and replays it to impersonate the user. Session cookies should use Secure so they are not sent over HTTP, and HSTS should be deployed fully where appropriate. If cookies use a Domain attribute, a subdomain may receive them; partial HSTS that protects only the apex host may leave a subdomain-related exposure. Testing involves assessing cookie attributes and HSTS scope, then determining whether exposed cookies can be replayed to access authenticated functions.",
+      "relevant_sources": [
+        "09-Testing_for_Session_Hijacking.md"
+      ]
+    }
+  ]
+}

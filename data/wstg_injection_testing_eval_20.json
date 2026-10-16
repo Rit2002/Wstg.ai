@@ -1,0 +1,194 @@
+{
+  "dataset_name": "OWASP WSTG Injection Testing Evaluation - 20 Questions",
+  "category": "Input Validation and Injection Testing",
+  "k": 5,
+  "relevance_unit": "source",
+  "notes": [
+    "Additional 20-question evaluation set based on the supplied OWASP WSTG Markdown files.",
+    "Relevant sources are exact Markdown filenames and should match the source metadata stored in the retrieval corpus.",
+    "Each question has one primary relevant source to keep source-level relevance labels explicit.",
+    "This dataset evaluates retrieval relevance, not the correctness or completeness of generated answers."
+  ],
+  "queries": [
+    {
+      "id": "WSTG-INPV-EVAL-001",
+      "wstg_id": "WSTG-INPV-01",
+      "question": "How should a tester identify reflected XSS input vectors and determine whether reflected input is safely encoded in the HTTP response?",
+      "reference_answer": "Identify user-controlled inputs including query parameters, POST data, hidden fields, and selection values. Submit harmless test strings, inspect the resulting HTML and response context, and check whether special characters are correctly encoded, replaced, or filtered.",
+      "relevant_sources": [
+        "01-Testing_for_Reflected_Cross_Site_Scripting.md"
+      ]
+    },
+    {
+      "id": "WSTG-INPV-EVAL-002",
+      "wstg_id": "WSTG-INPV-02",
+      "question": "What distinguishes stored XSS from reflected XSS, and why can stored XSS be especially dangerous when administrators view affected pages?",
+      "reference_answer": "Stored XSS occurs when untrusted input is saved and later rendered without proper filtering or encoding. It does not require a malicious link at the time of execution, and it can affect privileged users such as administrators who visit the page.",
+      "relevant_sources": [
+        "02-Testing_for_Stored_Cross_Site_Scripting.md"
+      ]
+    },
+    {
+      "id": "WSTG-INPV-EVAL-003",
+      "wstg_id": "WSTG-INPV-03",
+      "question": "What is HTTP verb tampering, and where does the supplied WSTG chapter direct readers for the current testing procedure?",
+      "reference_answer": "The supplied chapter states that its content has been merged into the Test HTTP Methods chapter under Configuration and Deployment Management Testing.",
+      "relevant_sources": [
+        "03-Testing_for_HTTP_Verb_Tampering.md"
+      ]
+    },
+    {
+      "id": "WSTG-INPV-EVAL-004",
+      "wstg_id": "WSTG-INPV-04",
+      "question": "What is HTTP Parameter Pollution, and how can duplicated parameter names cause unexpected application behavior?",
+      "reference_answer": "HTTP Parameter Pollution tests how an application handles repeated HTTP parameters with the same name. Different components may select, concatenate, or otherwise interpret duplicate values differently, potentially causing validation bypasses, errors, or altered internal values.",
+      "relevant_sources": [
+        "04-Testing_for_HTTP_Parameter_Pollution.md"
+      ]
+    },
+    {
+      "id": "WSTG-INPV-EVAL-005",
+      "wstg_id": "WSTG-INPV-05",
+      "question": "What are the main classes of SQL injection described by OWASP WSTG, and how do they differ in the way results are obtained?",
+      "reference_answer": "The chapter describes in-band, out-of-band, and inferential or blind SQL injection. In-band returns data through the same channel, out-of-band uses a different channel, and blind injection infers information from application or database behavior.",
+      "relevant_sources": [
+        "05-Testing_for_SQL_Injection.md"
+      ]
+    },
+    {
+      "id": "WSTG-INPV-EVAL-006",
+      "wstg_id": "WSTG-INPV-05-MYSQL",
+      "question": "What MySQL-specific considerations should a tester account for when examining SQL injection, including quote escaping and support for multiple statements?",
+      "reference_answer": "The MySQL chapter discusses escaping single quotes with backslashes, alternatives for representing string constants, version-dependent SQL features, and that MySQL library connectors generally do not support multiple semicolon-separated queries in the way some other database configurations may.",
+      "relevant_sources": [
+        "05.2-Testing_for_MySQL.md"
+      ]
+    },
+    {
+      "id": "WSTG-INPV-EVAL-007",
+      "wstg_id": "WSTG-INPV-05-SQLSERVER",
+      "question": "Which SQL Server-specific features does the WSTG chapter identify as relevant when assessing the impact of SQL injection?",
+      "reference_answer": "The chapter discusses SQL Server syntax and features such as the comment operator, statement separator, and extended stored procedures including xp_cmdshell and registry-related procedures. Their availability and impact depend on configuration and database privileges.",
+      "relevant_sources": [
+        "05.3-Testing_for_SQL_Server.md"
+      ]
+    },
+    {
+      "id": "WSTG-INPV-EVAL-008",
+      "wstg_id": "WSTG-INPV-05-POSTGRESQL",
+      "question": "How does the PostgreSQL WSTG chapter describe identifying the database engine and testing blind SQL injection behavior?",
+      "reference_answer": "The chapter describes using PostgreSQL-specific syntax such as the cast operator to help identify the backend and mentions version() for banner information. For blind injection it discusses string length, substring extraction, character conversion, and timing behavior using pg_sleep where available.",
+      "relevant_sources": [
+        "05.4-Testing_PostgreSQL.md"
+      ]
+    },
+    {
+      "id": "WSTG-INPV-EVAL-009",
+      "wstg_id": "WSTG-INPV-05-NOSQL",
+      "question": "Why can traditional SQL injection filters fail to prevent NoSQL injection, and what MongoDB query feature does the WSTG chapter highlight?",
+      "reference_answer": "NoSQL APIs may use JSON, application-language objects, or database-specific syntax rather than traditional SQL. Filtering only common HTML characters may not address the syntax used by those APIs. The chapter highlights MongoDB's $where operator as a feature that can evaluate JavaScript expressions.",
+      "relevant_sources": [
+        "05.6-Testing_for_NoSQL_Injection.md"
+      ]
+    },
+    {
+      "id": "WSTG-INPV-EVAL-010",
+      "wstg_id": "WSTG-INPV-05-ORM",
+      "question": "How can an ORM layer still be vulnerable to injection, and what safer query pattern does the WSTG chapter illustrate?",
+      "reference_answer": "An ORM does not automatically eliminate injection if unsanitized input is concatenated into generated query strings. The chapter illustrates using positional parameters and binding values rather than concatenating user input into a query.",
+      "relevant_sources": [
+        "05.7-Testing_for_ORM_Injection.md"
+      ]
+    },
+    {
+      "id": "WSTG-INPV-EVAL-011",
+      "wstg_id": "WSTG-INPV-05-CLIENT",
+      "question": "Which Web SQL Database API calls can indicate client-side SQL injection risk, and how can untrusted URL-fragment data affect a query?",
+      "reference_answer": "The chapter identifies openDatabase(), transaction(), and executeSql() as relevant API calls. If an application concatenates untrusted URL-fragment data into a SQL query instead of safely parameterizing it, the query logic can be altered and local database information may be exposed or changed.",
+      "relevant_sources": [
+        "05.8-Testing_for_Client-side.md"
+      ]
+    },
+    {
+      "id": "WSTG-INPV-EVAL-012",
+      "wstg_id": "WSTG-INPV-06",
+      "question": "What is LDAP injection, and which LDAP filter metacharacters does the WSTG chapter identify as important during testing?",
+      "reference_answer": "LDAP injection occurs when untrusted input is inserted into LDAP search, add, or modify operations. The chapter identifies characters and operators such as &, |, !, =, ~=, >=, <=, *, and parentheses as relevant to LDAP filter syntax.",
+      "relevant_sources": [
+        "06-Testing_for_LDAP_Injection.md"
+      ]
+    },
+    {
+      "id": "WSTG-INPV-EVAL-013",
+      "wstg_id": "WSTG-INPV-07",
+      "question": "What is the objective of XML injection testing, and how can malformed or injected XML data reveal inadequate contextual validation?",
+      "reference_answer": "XML injection testing checks whether an application accepts injected XML content because the parser or application fails to validate data in its context. Testing includes identifying injection points, trying XML metacharacters, and assessing whether injected tags or data alter the XML structure or behavior.",
+      "relevant_sources": [
+        "07-Testing_for_XML_Injection.md"
+      ]
+    },
+    {
+      "id": "WSTG-INPV-EVAL-014",
+      "wstg_id": "WSTG-INPV-08",
+      "question": "How can a tester determine whether Server-Side Includes are enabled and assess whether user input can trigger SSI directives?",
+      "reference_answer": "The chapter suggests identifying the web server and checking configuration or pages with extensions such as .shtml, while noting that the extension is not required. The tester identifies input vectors and checks whether SSI directive syntax is processed instead of treated as ordinary input.",
+      "relevant_sources": [
+        "08-Testing_for_SSI_Injection.md"
+      ]
+    },
+    {
+      "id": "WSTG-INPV-EVAL-015",
+      "wstg_id": "WSTG-INPV-09",
+      "question": "How is XPath injection conceptually similar to SQL injection, and what security outcomes may result from improperly handled XPath input?",
+      "reference_answer": "XPath injection occurs when user input changes an XPath query interpreted by the application. Similar to SQL injection, manipulated Boolean conditions can alter query logic, potentially bypass authentication or expose information from an XML document.",
+      "relevant_sources": [
+        "09-Testing_for_XPath_Injection.md"
+      ]
+    },
+    {
+      "id": "WSTG-INPV-EVAL-016",
+      "wstg_id": "WSTG-INPV-10",
+      "question": "What is the purpose of IMAP/SMTP injection testing, and which application inputs should be examined for command injection into mail operations?",
+      "reference_answer": "The test checks whether unsanitized input allows arbitrary IMAP or SMTP commands to be injected into backend mail-server communication. Relevant inputs can include mailbox and message operations for IMAP, and sender, recipient, subject, body, and attachments for SMTP.",
+      "relevant_sources": [
+        "10-Testing_for_IMAP_SMTP_Injection.md"
+      ]
+    },
+    {
+      "id": "WSTG-INPV-EVAL-017",
+      "wstg_id": "WSTG-INPV-11.1",
+      "question": "What conditions create a Local File Inclusion vulnerability, and what kinds of impact does the WSTG chapter describe?",
+      "reference_answer": "LFI can occur when an application includes a local file using a user-supplied path without proper validation, allowing path manipulation such as directory traversal. Potential impacts include sensitive information disclosure, denial of service, and in some cases server-side or client-side code execution.",
+      "relevant_sources": [
+        "11.1-Testing_for_Local_File_Inclusion.md"
+      ]
+    },
+    {
+      "id": "WSTG-INPV-EVAL-018",
+      "wstg_id": "WSTG-INPV-11.2",
+      "question": "How does Remote File Inclusion differ from Local File Inclusion, and what defensive approach does the WSTG chapter recommend for file selection?",
+      "reference_answer": "RFI involves including a remote file supplied through an inadequately validated input, while LFI targets files already present locally. The chapter recommends avoiding user-supplied paths in filesystem or framework APIs, or using an allowlist and stable identifiers to select permitted files.",
+      "relevant_sources": [
+        "11.2-Testing_for_Remote_File_Inclusion.md"
+      ]
+    },
+    {
+      "id": "WSTG-INPV-EVAL-019",
+      "wstg_id": "WSTG-INPV-05-ORACLE",
+      "question": "How does the Oracle PL/SQL Gateway process a web request, and why does the WSTG chapter emphasize understanding the Database Access Descriptor?",
+      "reference_answer": "The gateway extracts a package, procedure, and variables from a request, wraps the requested procedure in an anonymous PL/SQL block, sends it to the database, and returns the result through the web server. A Database Access Descriptor contains connection and authentication details used by the gateway to connect to the database.",
+      "relevant_sources": [
+        "05.1-Testing_for_Oracle.md"
+      ]
+    },
+    {
+      "id": "WSTG-INPV-EVAL-020",
+      "wstg_id": "WSTG-INPV-05-MSACCESS",
+      "question": "What database fingerprinting clues and SQL injection testing limitations does the WSTG chapter describe for Microsoft Access?",
+      "reference_answer": "The chapter describes recognizing Microsoft Access through characteristic JET or Access Database Engine errors. It notes limitations including lack of typical comment syntax, stacked queries, LIMIT, and sleep-like operators, and mentions alternatives such as TOP or LAST for limiting results.",
+      "relevant_sources": [
+        "05.5-Testing_for_MS_Access.md"
+      ]
+    }
+  ]
+}

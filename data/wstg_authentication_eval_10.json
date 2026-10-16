@@ -1,0 +1,111 @@
+{
+  "dataset_name": "OWASP WSTG Authentication Testing Retrieval Evaluation",
+  "category": "authentication_testing",
+  "k": 5,
+  "relevance_unit": "source",
+  "notes": [
+    "Ten questions based on the uploaded OWASP WSTG Authentication Testing Markdown files.",
+    "Relevant source filenames should be checked against the exact filenames in the local corpus before evaluation.",
+    "Question 10 intentionally tests retrieval across multiple authentication-related sources; review its relevance labels before using formal metrics."
+  ],
+  "queries": [
+    {
+      "id": "WSTG-ATHN-EVAL-001",
+      "wstg_id": "WSTG-ATHN-02",
+      "question": "How should a tester assess whether a web application or infrastructure component still accepts default credentials, and what precautions should be taken during testing?",
+      "reference_answer": "Identify administrative interfaces and check manufacturer documentation for known default credentials. Review common or organization-specific account naming patterns, login and recovery responses, source code, configuration files, and newly created accounts for predictable credentials. Consider account lockout risks and obtain authorization before testing attempts that could lock accounts.",
+      "relevant_sources": [
+        "02-Testing_for_Default_Credentials.md"
+      ]
+    },
+    {
+      "id": "WSTG-ATHN-EVAL-002",
+      "wstg_id": "WSTG-ATHN-03",
+      "question": "How can a tester determine whether an account lockout mechanism adequately limits repeated failed logins, and what should be checked about account unlocking?",
+      "reference_answer": "Using an authorized test account, perform controlled failed login attempts and then try the correct password to determine whether and when lockout occurs. Check lockout duration, whether the account automatically unlocks, and whether self-service or administrator unlocking is adequately protected. Also assess whether CAPTCHA is enforced server-side and whether alternate endpoints bypass the controls.",
+      "relevant_sources": [
+        "03-Testing_for_Weak_Lock_Out_Mechanism.md"
+      ]
+    },
+    {
+      "id": "WSTG-ATHN-EVAL-003",
+      "wstg_id": "WSTG-ATHN-04",
+      "question": "Which authentication-bypass weaknesses should be tested when assessing protected pages, request parameters, and session identifiers?",
+      "reference_answer": "Check whether protected pages can be accessed directly without logging in, whether modifying URL, form, or cookie parameters changes authentication state, and whether session identifiers are predictable. Authentication should be enforced on every protected resource, and authentication state must not rely on user-controlled values. SQL injection and implementation flaws should also be considered within the authorized test scope.",
+      "relevant_sources": [
+        "04-Testing_for_Bypassing_Authentication_Schema.md"
+      ]
+    },
+    {
+      "id": "WSTG-ATHN-EVAL-004",
+      "wstg_id": "WSTG-ATHN-05",
+      "question": "What security risks are associated with a remember-me feature, and what should a tester inspect about stored credentials and persistent tokens?",
+      "reference_answer": "Check whether credentials are stored in browser storage in clear text or in easily recoverable encoded or encrypted form; credentials should not be stored client-side. Inspect whether server-generated tokens replace stored credentials, whether tokens have appropriate lifetimes and expiration, and whether automatic credential injection introduces risks such as clickjacking or CSRF.",
+      "relevant_sources": [
+        "05-Testing_for_Vulnerable_Remember_Password.md"
+      ]
+    },
+    {
+      "id": "WSTG-ATHN-EVAL-005",
+      "wstg_id": "WSTG-ATHN-06",
+      "question": "How can a tester check whether sensitive information remains accessible through browser history or cache after logout?",
+      "reference_answer": "View sensitive information while authenticated, log out, and use the browser Back button to see whether previously displayed content remains accessible. Inspect responses for cache-prevention headers such as Cache-Control: no-cache, no-store, Expires: 0, and Pragma: no-cache, and review the browser cache using developer tools or an intercepting proxy. Consider mobile browsers separately.",
+      "relevant_sources": [
+        "06-Testing_for_Browser_Cache_Weaknesses.md"
+      ]
+    },
+    {
+      "id": "WSTG-ATHN-EVAL-006",
+      "wstg_id": "WSTG-ATHN-07",
+      "question": "Which password-policy properties should be evaluated to determine resistance to password guessing and password reuse?",
+      "reference_answer": "Assess permitted character sets, minimum and maximum length, password history and reuse restrictions, how soon passwords can be changed again, password similarity rules, whether account information can be used in passwords, and whether common passwords are accepted. Consider password aging requirements and additional authentication controls such as multifactor authentication.",
+      "relevant_sources": [
+        "07-Testing_for_Weak_Password_Policy.md"
+      ]
+    },
+    {
+      "id": "WSTG-ATHN-EVAL-007",
+      "wstg_id": "WSTG-ATHN-08",
+      "question": "What makes security questions weak, and how should a tester evaluate whether their answers can be guessed or brute-forced?",
+      "reference_answer": "Check whether predefined questions have answers that are public, easy to guess, discoverable through social media, or drawn from a small answer space. Determine whether users can create weak custom questions, how many answers are required, how many attempts are allowed, and whether incorrect answers trigger effective lockout controls.",
+      "relevant_sources": [
+        "08-Testing_for_Weak_Security_Question_Answer.md"
+      ]
+    },
+    {
+      "id": "WSTG-ATHN-EVAL-008",
+      "wstg_id": "WSTG-ATHN-09",
+      "question": "What checks help identify vulnerabilities in password change and password reset workflows?",
+      "reference_answer": "Verify that users cannot change or reset another user's password without authorization, check for CSRF and process manipulation, and determine whether the current password or re-authentication is required for password changes. For resets, inspect the verification process, token randomness and one-time use, confirmation before completing the reset, how temporary credentials are delivered, and whether old passwords are exposed.",
+      "relevant_sources": [
+        "09-Testing_for_Weak_Password_Change_or_Reset_Functionalities.md"
+      ]
+    },
+    {
+      "id": "WSTG-ATHN-EVAL-009",
+      "wstg_id": "WSTG-ATHN-10",
+      "question": "How should a tester identify and compare alternative authentication channels that share user accounts with the primary website?",
+      "reference_answer": "Identify mobile, partner, staging, desktop, call-center, and other authentication channels through site content, proxy logs, and searches. Determine whether they share accounts or functionality, inventory which authentication operations each supports, and compare their transport security, password recovery, identity verification, session handling, and overall policy with the primary channel.",
+      "relevant_sources": [
+        "10-Testing_for_Weaker_Authentication_in_Alternative_Channel.md"
+      ]
+    },
+    {
+      "id": "WSTG-ATHN-EVAL-010",
+      "wstg_id": "WSTG-ATHN-EVAL-011",
+      "question": "How should a tester evaluate whether an application's authentication controls are consistently enforced across login, recovery, persistent-session, and alternative-channel workflows?",
+      "reference_answer": "Compare authentication protections across the primary login flow and related workflows, including password reset, remember-me sessions, lockout and CAPTCHA controls, and alternative channels. Verify that protected resources enforce authentication server-side, recovery and persistent tokens are secure and time-limited, and weaker alternate routes do not undermine the primary authentication mechanism.",
+      "relevant_sources": [
+        "02-Testing_for_Default_Credentials.md",
+        "03-Testing_for_Weak_Lock_Out_Mechanism.md",
+        "04-Testing_for_Bypassing_Authentication_Schema.md",
+        "05-Testing_for_Vulnerable_Remember_Password.md",
+        "06-Testing_for_Browser_Cache_Weaknesses.md",
+        "07-Testing_for_Weak_Password_Policy.md",
+        "08-Testing_for_Weak_Security_Question_Answer.md",
+        "09-Testing_for_Weak_Password_Change_or_Reset_Functionalities.md",
+        "10-Testing_for_Weaker_Authentication_in_Alternative_Channel.md"
+      ]
+    }
+  ]
+}

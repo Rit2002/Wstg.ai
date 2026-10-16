@@ -1,0 +1,130 @@
+{
+  "dataset_name": "OWASP WSTG Client-side Testing Evaluation - Additional 13 Questions",
+  "category": "Client-side Testing",
+  "k": 5,
+  "relevance_unit": "source",
+  "notes": [
+    "Additional source-level retrieval evaluation set based only on the supplied OWASP WSTG Markdown files (WSTG-CLNT-01 to WSTG-CLNT-13).",
+    "Relevant sources are exact Markdown filenames from the supplied corpus.",
+    "Use unique retrieved source filenames when computing source-level metrics so duplicate chunks from the same source do not inflate relevance."
+  ],
+  "queries": [
+    {
+      "id": "WSTG-MIX-EVAL-047",
+      "wstg_id": "WSTG-CLNT-01",
+      "question": "Why is DOM-based XSS hard to detect with automated scanners, and how should a tester manually look for it?",
+      "reference_answer": "DOM-based XSS occurs when client-side JavaScript takes input from a source and passes it to a sink, so the payload may never reach the server (for example a URL fragment after #), which makes server-side filtering and response-reflection-based scanning ineffective. Automated tools usually send a payload and look for it in the server response, so they miss cases such as code that only writes the URL under certain browser conditions unless they analyze client-side code. Testers should crawl the application to find all JavaScript and input points, including event handlers and CSS expression blocks, identify sources and sinks, consider top-down testing for large libraries, and manually examine code where parameters are written to the page, the DOM is modified, or scripts are executed.",
+      "relevant_sources": [
+        "01-Testing_for_DOM-based_Cross_Site_Scripting.md"
+      ]
+    },
+    {
+      "id": "WSTG-MIX-EVAL-048",
+      "wstg_id": "WSTG-CLNT-02",
+      "question": "What does a JavaScript injection vulnerability look like in client-side code, and which sources and sinks should a tester identify?",
+      "reference_answer": "JavaScript injection is a subtype of XSS where an attacker can inject arbitrary JavaScript executed in the victim's browser, caused by missing input and output validation during dynamic content processing. Examples include code that passes a query-string value to window.location after decoding it, allowing a javascript: URL, and code that uses eval on a value derived from location.hash. The tester should identify sinks and injection points such as eval and attacker-controlled sources like location.hash and the query string, and keep in mind that browsers treat some characters differently.",
+      "relevant_sources": [
+        "02-Testing_for_JavaScript_Execution.md"
+      ]
+    },
+    {
+      "id": "WSTG-MIX-EVAL-049",
+      "wstg_id": "WSTG-CLNT-03",
+      "question": "Which JavaScript methods commonly lead to HTML injection when given untrusted input, and what is the impact of the vulnerability?",
+      "reference_answer": "HTML injection happens when user input is not sanitized and output is not encoded, so the browser cannot distinguish legitimate from injected markup. Methods such as the innerHTML property and document.write() are common sinks, as in code that builds a greeting from a user parameter in the URL. An input such as an image tag with an onerror handler can run script in the page context. Consequences include disclosure of session cookies and modification of the page content seen by victims. The tester should identify injection points and assess the severity of the injected content.",
+      "relevant_sources": [
+        "03-Testing_for_HTML_Injection.md"
+      ]
+    },
+    {
+      "id": "WSTG-MIX-EVAL-050",
+      "wstg_id": "WSTG-CLNT-04",
+      "question": "How does client-side URL redirection (open redirect) occur, and why is it useful for phishing or other attacks?",
+      "reference_answer": "It occurs when client-side code, such as an assignment to window.location, uses unvalidated user input like location.hash to decide where to send the browser. An attacker can craft a link on the trusted site that redirects victims to a look-alike site to steal credentials, and because the redirect originates from the real application it appears more trustworthy. With a variation that does not prefix the scheme, the same flaw allows a javascript: URL, leading to script execution. Open redirects could also be used to bypass access control checks and reach privileged functions. Testers should identify injection points that handle URLs or paths and assess where the system could redirect.",
+      "relevant_sources": [
+        "04-Testing_for_Client-side_URL_Redirect.md"
+      ]
+    },
+    {
+      "id": "WSTG-MIX-EVAL-051",
+      "wstg_id": "WSTG-CLNT-05",
+      "question": "What impacts can CSS injection have, and how can CSS selectors be used to extract sensitive values such as CSRF tokens?",
+      "reference_answer": "CSS injection lets an attacker inject CSS into a trusted site's context, which can lead to script execution in certain conditions (for example older browsers via cssText or expression) or to data exfiltration. For exfiltration, attribute selectors can match an input, such as one named csrf_token, whose value begins with a guessed character, and a rule such as setting a background image to an attacker URL then reveals the match; brute-forcing the value character by character leaks it. Testers should analyze code for places where user input reaches CSS, such as location.hash flowing into a style attribute or cssText, and assess the impact. Allowing users to supply custom CSS is a considerable risk.",
+      "relevant_sources": [
+        "05-Testing_for_CSS_Injection.md"
+      ]
+    },
+    {
+      "id": "WSTG-MIX-EVAL-052",
+      "wstg_id": "WSTG-CLNT-06",
+      "question": "Which resource types and sinks should be checked for client-side resource manipulation, and how can it lead to XSS?",
+      "reference_answer": "Client-side resource manipulation occurs when user-controlled input specifies the path of a resource such as an iframe source, script, applet, or XMLHttpRequest handler. The sinks listed include the src of iframe, img and script elements, the href of a and link elements, the URL argument of xhr.open, and the data attribute of object. The most interesting ones allow attacker-supplied client-side code, such as setting a script element's src from location.hash so that external JavaScript loads, or letting a CORS request fetch attacker-controlled HTML that is written with innerHTML. Testers should identify sinks with weak input validation and assess the impact.",
+      "relevant_sources": [
+        "06-Testing_for_Client-side_Resource_Manipulation.md"
+      ]
+    },
+    {
+      "id": "WSTG-MIX-EVAL-053",
+      "wstg_id": "WSTG-CLNT-07",
+      "question": "Which CORS response header configurations should be treated as insecure, and what role does input validation play in CORS-related vulnerabilities?",
+      "reference_answer": "Testers should look for Access-Control-Allow-Origin set to the wildcard, or servers that simply reflect the Origin header without checks, both of which are very insecure except for public APIs intended for everyone. The Origin header should not be relied on for access control because it can be spoofed outside the browser. Other relevant headers include Access-Control-Allow-Methods, Allow-Headers, Allow-Credentials, Max-Age and Expose-Headers, and non-simple requests trigger a preflight OPTIONS request. On the input side, URLs passed to XMLHttpRequest without validation, especially absolute URLs, and unescaped response data can lead to injection, as when a location.hash value is requested and written with innerHTML. Testers can use a tool such as ZAP to intercept headers and manually inspect JavaScript.",
+      "relevant_sources": [
+        "07-Testing_Cross_Origin_Resource_Sharing.md"
+      ]
+    },
+    {
+      "id": "WSTG-MIX-EVAL-054",
+      "wstg_id": "WSTG-CLNT-08",
+      "question": "What are the main vectors for Cross Site Flashing, and what does a tester do to analyze a Flash application?",
+      "reference_answer": "Cross-Site Flashing arises when movies from different domains interact, for example one movie loading another with loadMovie functions, JavaScript commanding a movie through GetVariable and SetVariable, or unexpected browser-to-SWF communication. A tester decompiles the SWF (for example with flare for ActionScript 2.0) for white-box analysis, looks for undefined variables or FlashVars that URL parameters can overwrite, and checks unsafe methods such as loadMovie, getURL, XML.load, ExternalInterface.call and htmlText with controllable input. Specific vectors include getURL or navigateToURL with a javascript: URL, the asfunction protocol, ExternalInterface injection, HTML injection in TextFields, reflected XSS by loading the SWF directly, and SWFs acting as open redirectors. Later Flash Player versions restricted some of these attacks.",
+      "relevant_sources": [
+        "08-Testing_for_Cross_Site_Flashing.md"
+      ]
+    },
+    {
+      "id": "WSTG-MIX-EVAL-055",
+      "wstg_id": "WSTG-CLNT-09",
+      "question": "How do you test whether a page is vulnerable to clickjacking, and what techniques can bypass frame-busting or X-Frame-Options defenses?",
+      "reference_answer": "Create a simple page containing an iframe that loads the target; if the page loads in the frame, it has no clickjacking protection, and if not, there is probably some protection that may still be bypassable. Client-side frame busting can be bypassed by double framing, disabling JavaScript (restricted frames, the sandbox attribute, design mode), onBeforeUnload tricks including repeatedly cancelling navigation with a 204 response, abusing browser XSS filters, redefining location in some old browsers, or using an unprotected mobile version. The X-Frame-Options header, which should ideally be DENY, can fail with old browsers that do not support it, proxies that strip it, or unprotected mobile pages. A proof of concept can use a transparent, positioned iframe over a harmless-looking button, which can defeat anti-CSRF tokens because actions come from the authentic hidden page.",
+      "relevant_sources": [
+        "09-Testing_for_Clickjacking.md"
+      ]
+    },
+    {
+      "id": "WSTG-MIX-EVAL-056",
+      "wstg_id": "WSTG-CLNT-10",
+      "question": "What security aspects of WebSockets should be tested, and how can a tester identify and probe WebSocket usage?",
+      "reference_answer": "Testers identify WebSocket use by looking for the ws:// or wss:// schemes in client-side code, using Chrome DevTools network inspection, or using ZAP's WebSocket tab. The server must validate the Origin header in the handshake; if a client from another origin can connect, cross-site WebSocket hijacking (CSRF-like) issues are possible. The connection should use wss:// with a sound TLS implementation. WebSockets do not handle authentication or authorization, so the usual authentication and authorization tests apply, and messages should be replayed and fuzzed (for example with ZAP) to check input sanitization for injection and XSS.",
+      "relevant_sources": [
+        "10-Testing_WebSockets.md"
+      ]
+    },
+    {
+      "id": "WSTG-MIX-EVAL-057",
+      "wstg_id": "WSTG-CLNT-11",
+      "question": "What mistakes in postMessage usage and message event handlers should a tester look for when testing web messaging?",
+      "reference_answer": "On the sending side, the target origin argument of postMessage should be explicit and not the wildcard, otherwise data could be sent to unknown hosts after a redirect or origin change. On the receiving side, the message event listener must verify event.origin before processing; missing checks accept messages from any domain, and weak checks such as testing whether the origin contains a substring like .owasp.org can be bypassed with a domain like www.owasp.org.attacker.com. Even messages from trusted origins must be treated as untrusted data, so code that passes event data to eval or assigns it to innerHTML can cause DOM-based XSS, and innerText is a safer choice. An origin is the scheme, host and port, so differences in any of them matter.",
+      "relevant_sources": [
+        "11-Testing_Web_Messaging.md"
+      ]
+    },
+    {
+      "id": "WSTG-MIX-EVAL-058",
+      "wstg_id": "WSTG-CLNT-12",
+      "question": "Which browser storage mechanisms should be inspected for sensitive data, and what should be checked for CryptoKeys stored in IndexedDB?",
+      "reference_answer": "The mechanisms to inspect are Local Storage (persistent, string key-value), Session Storage (cleared when the tab or window closes), IndexedDB (structured objects including CryptoKeys), deprecated Web SQL, cookies, and custom state attached to the global window object, all viewable through developer tools or console snippets that list entries. The goal is to determine whether sensitive data is stored client-side and whether handling code is open to injection via unvalidated input or vulnerable libraries. For CryptoKeys in IndexedDB, check whether keys are marked extractable true when they should be false so that private key material is never exposed. Findings can be chained with attacks such as DOM-based XSS, and sensitive data should instead be stored securely on the server side.",
+      "relevant_sources": [
+        "12-Testing_Browser_Storage.md"
+      ]
+    },
+    {
+      "id": "WSTG-MIX-EVAL-059",
+      "wstg_id": "WSTG-CLNT-13",
+      "question": "How does Cross Site Script Inclusion (XSSI) leak sensitive data across origins, and which leakage vehicles should a tester analyze?",
+      "reference_answer": "The same-origin policy does not apply to script tag inclusion, so an attacker's page can include a script from the victim's site that is fetched with the victim's authenticated session and runs in the attacker page's context, leaking data. Testers should collect data using authenticated and unauthenticated sessions, compare responses to find dynamically generated JavaScript, pay attention to JSONP, and check non-JavaScript file types too. The leakage vehicles to analyze are global variables, global function parameters, CSV with quotation theft, JavaScript runtime errors (notably in old IE versions), and prototype chaining using this, for example by overriding Array.prototype.forEach. XSSI differs from CSRF in that it steals data from authenticated sessions rather than performing state-changing actions.",
+      "relevant_sources": [
+        "13-Testing_for_Cross_Site_Script_Inclusion.md"
+      ]
+    }
+  ]
+}

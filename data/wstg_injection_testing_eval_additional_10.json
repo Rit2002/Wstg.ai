@@ -1,0 +1,104 @@
+{
+  "dataset_name": "OWASP WSTG Injection Testing Evaluation - Additional 10 Questions",
+  "category": "Injection Testing",
+  "k": 5,
+  "relevance_unit": "source",
+  "notes": [
+    "Additional question set for retrieval evaluation, following the existing source-level JSON schema.",
+    "Relevant sources are source Markdown filenames, not individual chunks.",
+    "The uploaded Buffer Overflow Markdown file states that its content has been removed, so it is not used as a reference source.",
+    "Questions are based on the supplied WSTG Markdown files."
+  ],
+  "queries": [
+    {
+      "id": "WSTG-INPV-EVAL-021",
+      "wstg_id": "WSTG-INPV-11",
+      "question": "How can a tester determine whether user-controlled input is interpreted as server-side code or an included file?",
+      "reference_answer": "Code injection testing identifies input that the server processes as dynamic code or an included file. Test query-string and form inputs, and inspect code paths that pass user input into execution or include mechanisms.",
+      "relevant_sources": [
+        "11-Testing_for_Code_Injection.md"
+      ]
+    },
+    {
+      "id": "WSTG-INPV-EVAL-022",
+      "wstg_id": "WSTG-INPV-12",
+      "question": "What is the difference between OS command injection and ordinary input handling, and what should a tester identify?",
+      "reference_answer": "OS command injection occurs when input supplied through a web interface is interpreted as an operating-system command. The tester should identify and assess command-injection points in requests and relevant application code.",
+      "relevant_sources": [
+        "12-Testing_for_Command_Injection.md"
+      ]
+    },
+    {
+      "id": "WSTG-INPV-EVAL-023",
+      "wstg_id": "WSTG-INPV-13",
+      "question": "How should a tester assess whether user-controlled format strings cause unintended behavior?",
+      "reference_answer": "Inject format conversion specifiers into user-controlled string fields and observe whether the application produces unexpected output, information disclosure, runtime errors, or crashes. Code review and static analysis can help locate unsafe formatting calls.",
+      "relevant_sources": [
+        "13-Testing_for_Format_String_Injection.md"
+      ]
+    },
+    {
+      "id": "WSTG-INPV-EVAL-024",
+      "wstg_id": "WSTG-INPV-14",
+      "question": "Why are incubated vulnerabilities considered multi-step attacks, and what should testing establish?",
+      "reference_answer": "An incubated vulnerability requires an attack vector to be stored first and then executed or recalled later. Testing should identify stored injections, determine how the recall step occurs, and activate or observe that step where possible.",
+      "relevant_sources": [
+        "14-Testing_for_Incubated_Vulnerability.md"
+      ]
+    },
+    {
+      "id": "WSTG-INPV-EVAL-025",
+      "wstg_id": "WSTG-INPV-15",
+      "question": "How can unsanitized user input in an HTTP response header lead to HTTP response splitting?",
+      "reference_answer": "If user-controlled input is inserted into response headers without filtering CR and LF characters, an attacker may split one response into multiple messages. This can enable effects such as web-cache poisoning or cross-site scripting.",
+      "relevant_sources": [
+        "15-Testing_for_HTTP_Splitting_Smuggling.md"
+      ]
+    },
+    {
+      "id": "WSTG-INPV-EVAL-026",
+      "wstg_id": "WSTG-INPV-15",
+      "question": "What is the core cause of HTTP request smuggling, and why is gray-box knowledge useful?",
+      "reference_answer": "HTTP request smuggling exploits differences in how agents such as web servers, proxies, firewalls, or caches parse specially crafted HTTP messages. Gray-box knowledge helps identify the components and parsing differences in the request-processing chain.",
+      "relevant_sources": [
+        "15-Testing_for_HTTP_Splitting_Smuggling.md"
+      ]
+    },
+    {
+      "id": "WSTG-INPV-EVAL-027",
+      "wstg_id": "WSTG-INPV-16",
+      "question": "How can HTTP requests be monitored when the tester cannot change the client browser's proxy settings?",
+      "reference_answer": "The guide describes server-side monitoring approaches such as configuring a reverse proxy, using port forwarding, or capturing TCP-level traffic with tools such as Wireshark or tcpdump. Captured requests can then be inspected and, with suitable tools, replayed.",
+      "relevant_sources": [
+        "16-Testing_for_HTTP_Incoming_Requests.md"
+      ]
+    },
+    {
+      "id": "WSTG-INPV-EVAL-028",
+      "wstg_id": "WSTG-INPV-17",
+      "question": "What security impacts can result when an application trusts an unvalidated Host header?",
+      "reference_answer": "An unvalidated Host header can influence virtual-host routing or redirects, enable web-cache poisoning, and affect password-reset links. Testing should determine whether the application dynamically trusts Host or related forwarded-host headers.",
+      "relevant_sources": [
+        "17-Testing_for_Host_Header_Injection.md"
+      ]
+    },
+    {
+      "id": "WSTG-INPV-EVAL-029",
+      "wstg_id": "WSTG-INPV-18",
+      "question": "How can a tester detect server-side template injection and identify the template engine?",
+      "reference_answer": "Submit harmless template expressions and observe whether the server evaluates them, then compare responses to identify the likely template engine. The guide also recommends code inspection and tools such as Tplmap or a Burp Suite scanner extension.",
+      "relevant_sources": [
+        "18-Testing_for_Server-side_Template_Injection.md"
+      ]
+    },
+    {
+      "id": "WSTG-INPV-EVAL-030",
+      "wstg_id": "WSTG-INPV-19",
+      "question": "What is SSRF, and what kinds of resources should a tester check whether the server can access?",
+      "reference_answer": "Server-side request forgery occurs when user-controlled input causes the server to make unintended requests. Testing should identify SSRF injection points and assess access to external URLs, localhost or restricted internal services, and local resources, including blind SSRF cases.",
+      "relevant_sources": [
+        "19-Testing_for_Server-Side_Request_Forgery.md"
+      ]
+    }
+  ]
+}

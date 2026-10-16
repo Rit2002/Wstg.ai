@@ -1,0 +1,58 @@
+{
+  "dataset_name": "OWASP WSTG Identity Management Retrieval Evaluation",
+  "category": "identity_management",
+  "k": 5,
+  "relevance_unit": "source",
+  "notes": [
+    "Five evaluation questions based on the five supplied OWASP WSTG Identity Management Markdown files.",
+    "Relevant source values match the uploaded Markdown filenames exactly.",
+    "Review the reference answers and relevance labels before using this dataset for formal evaluation."
+  ],
+  "queries": [
+    {
+      "id": "WSTG-IDNT-EVAL-001",
+      "wstg_id": "WSTG-IDNT-01",
+      "question": "How should a tester identify application roles and assess whether each role has only the permissions required for its responsibilities?",
+      "reference_answer": "Identify roles using application documentation, guidance from developers or administrators, application comments, and testing for possible role indicators. Then verify whether roles can be switched or accessed and review the permissions assigned to each role, checking that users such as support engineers cannot perform administrative actions and that sensitive administrator actions have suitable safeguards.",
+      "relevant_sources": [
+        "01-Test_Role_Definitions(1).md"
+      ]
+    },
+    {
+      "id": "WSTG-IDNT-EVAL-002",
+      "wstg_id": "WSTG-IDNT-02",
+      "question": "What should a tester verify about identity requirements and validation during a user registration process?",
+      "reference_answer": "Verify that registration identity requirements match the application's business and security needs. Check who can register, whether registration is reviewed by a person or automatically approved, whether the same identity can register multiple times, whether users can select different roles, what proof of identity is required, and whether identities are verified. Also check whether identity information can be forged or manipulated during registration.",
+      "relevant_sources": [
+        "02-Test_User_Registration_Process(1).md"
+      ]
+    },
+    {
+      "id": "WSTG-IDNT-EVAL-003",
+      "wstg_id": "WSTG-IDNT-03",
+      "question": "Which authorization and lifecycle checks should be performed when testing account provisioning and de-provisioning?",
+      "reference_answer": "Determine which roles can provision accounts and what account types they can create. Check whether provisioning and de-provisioning requests are verified, vetted, and authorized; whether administrators or users can create accounts with greater privileges than their own; whether they can de-provision themselves; and how resources owned by a de-provisioned user are deleted or transferred.",
+      "relevant_sources": [
+        "03-Test_Account_Provisioning_Process(1).md"
+      ]
+    },
+    {
+      "id": "WSTG-IDNT-EVAL-004",
+      "wstg_id": "WSTG-IDNT-04",
+      "question": "How can differences in authentication responses reveal valid usernames, and what behavior should a secure application use instead?",
+      "reference_answer": "Compare responses for valid credentials, a valid username with a wrong password, and a nonexistent username with a wrong password. Differences in error messages, HTTP status or response length, redirects, URLs, page titles, recovery messages, response timing, or resource responses may reveal whether an account exists. The application should return consistent generic error messages for failed authentication attempts.",
+      "relevant_sources": [
+        "04-Testing_for_Account_Enumeration_and_Guessable_User_Account.md"
+      ]
+    },
+    {
+      "id": "WSTG-IDNT-EVAL-005",
+      "wstg_id": "WSTG-IDNT-05",
+      "question": "How should a tester assess a weak or unenforced username policy, and what remediation does the guide recommend?",
+      "reference_answer": "Determine the structure of account names, evaluate application responses to valid and invalid account names, and assess whether differing responses or account-name dictionaries allow valid usernames to be enumerated. The guide recommends returning consistent generic error messages for invalid account names, passwords, or other credentials during login.",
+      "relevant_sources": [
+        "05-Testing_for_Weak_or_Unenforced_Username_Policy.md"
+      ]
+    }
+  ]
+}
