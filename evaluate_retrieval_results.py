@@ -29,7 +29,7 @@ METHOD_FILES = {
     "BM25 + vector + RRF + Cohere": "hybrid_rrf_cohere_retrieval.json",
 }
 METRICS = (
-    "precision_at_k",
+    "normalized_precision_at_k",
     "recall_at_k",
     "mrr_at_k",
     "map_at_k",
@@ -70,8 +70,11 @@ def unique_ranked_sources(ranked_results: list[dict]) -> list[str]:
     return sources
 
 
-def precision_at_k(ranked: list[str], relevant: set[str], k: int) -> float:
-    return sum(source in relevant for source in ranked[:k]) / k if k else 0.0
+def normalized_precision_at_k(ranked: list[str], relevant: set[str], k: int) -> float:
+    if not relevant or k <= 0:
+        return 0.0
+    hits = sum(source in relevant for source in ranked[:k])
+    return hits / min(len(relevant), k)
 
 
 def recall_at_k(ranked: list[str], relevant: set[str], k: int) -> float:
@@ -147,7 +150,7 @@ def evaluate_one_method(
             "relevant_retrieved_top_k": [
                 source for source in retrieved_sources[:k] if source in relevant
             ],
-            "precision_at_k": precision_at_k(retrieved_sources, relevant, k),
+            "normalized_precision_at_k": normalized_precision_at_k(retrieved_sources, relevant, k),
             "recall_at_k": recall_at_k(retrieved_sources, relevant, k),
             "mrr_at_k": mrr_at_k(retrieved_sources, relevant, k),
             "map_at_k": average_precision_at_k(retrieved_sources, relevant, k),
