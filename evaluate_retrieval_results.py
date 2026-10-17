@@ -3,7 +3,8 @@ PART B: Evaluate saved retrieval rankings.
 
 This script performs no retrieval calls. It only reads the dataset and saved
 rankings, calculates source-level Precision@K, Recall@K, MRR@K, MAP@K, NDCG@K,
-and writes one overall comparison CSV plus detailed JSON reports.
+writes detailed JSON reports to the evaluation directory, and writes each
+dataset comparison CSV to the root-level retrieval_csv_exports directory.
 
 Example:
     python evaluate_retrieval_results.py \
@@ -258,13 +259,24 @@ def main():
         encoding="utf-8",
     )
 
+    # Save comparison CSVs in one root-level directory, separate from
+    # the nested JSON evaluation reports.
     metric_columns = list(METRICS)
-    with (output_dir / "comparison.csv").open("w", newline="", encoding="utf-8") as file:
+    csv_dir = Path("retrieval_csv_exports")
+    csv_dir.mkdir(parents=True, exist_ok=True)
+
+    # Use the dataset filename (without extension) for a stable, unique name.
+    # Example: wstg_authentication_eval_10_comparison.csv
+    dataset_slug = safe_filename(dataset_path.stem)
+    csv_path = csv_dir / f"{dataset_slug}_comparison.csv"
+
+    with csv_path.open("w", newline="", encoding="utf-8") as file:
         writer = csv.DictWriter(file, fieldnames=["method", *metric_columns])
         writer.writeheader()
         writer.writerows(comparison_rows)
 
-    print(f"Evaluation complete. Reports saved to: {output_dir.resolve()}")
+    print(f"Evaluation complete. JSON reports saved to: {output_dir.resolve()}")
+    print(f"Comparison CSV saved to: {csv_path.resolve()}")
     print(f"Questions: {len(dataset.get('queries', []))}; K={k}")
     print("\nOVERALL MACRO-AVERAGES")
     print(f"{'Method':<34}" + "".join(f"{metric:>16}" for metric in metric_columns))

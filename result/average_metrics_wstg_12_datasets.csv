@@ -1,0 +1,5 @@
+method,normalized_precision_at_k,recall_at_k,mrr_at_k,map_at_k,ndcg_at_k
+BM25,0.812778,0.812037,0.758998,0.748998,0.767454
+Pinecone vector,0.845833,0.845833,0.793786,0.789202,0.804772
+BM25 + vector + RRF,0.835000,0.834259,0.803045,0.794156,0.806882
+BM25 + vector + RRF + Cohere,0.855833,0.855093,0.850962,0.842906,0.847807

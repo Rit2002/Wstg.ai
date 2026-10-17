@@ -44,8 +44,8 @@ embedding = HuggingFaceEmbeddings(
 
 tokenizer = AutoTokenizer.from_pretrained(EMBEDDING_MODEL)
 
-CHUNK_SIZE = 350
-CHUNK_OVERLAP = 50
+CHUNK_SIZE = 256
+CHUNK_OVERLAP = 64
 BATCH_SIZE = 32
 
 
