@@ -26,7 +26,7 @@ Evaluation: offline retrieval metrics, 113 questions in 12 datasets, file-level 
 ```
 
 **Models:** `BAAI/bge-base-en-v1.5` embeddings (768-dim, local), Pinecone vector store,
-BM25Okapi, Cohere `rerank-v3.5`.
+BM25Okapi, Cohere `rerank-v4.0-fast`.
 **Corpus:** OWASP WSTG test-case pages (Markdown). Chunks keep `source`, `filename` and a
 `heading_path`; the title/ID block is merged with the first section.
 
