@@ -1,19 +1,47 @@
-# 🔍 WSTG Intelligence: Hybrid RAG Retrieval over OWASP WSTG
+# WSTG Intelligence
 
-A hybrid retrieval pipeline (BM25 + Pinecone + RRF + Cohere rerank) over the
-[OWASP Web Security Testing Guide](https://github.com/OWASP/wstg), with an offline
-**evaluation harness** on 113 questions and a chunk-size comparison, not just a demo.
+**Hybrid RAG over the OWASP Web Security Testing Guide, evaluated on retrieval quality and on answer quality.**
 
+A retrieval-augmented question answering system over the
+[OWASP Web Security Testing Guide](https://github.com/OWASP/wstg). Retrieval combines BM25 and
+dense vector search with Reciprocal Rank Fusion (RRF) and a Cohere reranker, and answers are
+generated from the retrieved chunks. Evaluation is treated as a first-class part of the project:
+retrieval is benchmarked offline on 113 labeled questions, and end-to-end answer quality is
+measured with RAGAS on 29 questions using an LLM judge.
+
+---
+
+## Results at a Glance
+
+**Retrieval quality** (full pipeline: BM25 + vector + RRF + Cohere, chunk 256 / overlap 64, K = 5,
+113 questions in 12 datasets)
+
+| Norm. Precision@5 | Recall@5 | MRR@5 | MAP@5 | NDCG@5 |
+|:---:|:---:|:---:|:---:|:---:|
+| 0.8558 | 0.8551 | 0.8510 | 0.8429 | 0.8478 |
+
+**Answer quality** (RAGAS, 29 questions, LLM judge)
+
+| Faithfulness | Answer relevancy | Factual correctness | Context precision | Context recall |
+|:---:|:---:|:---:|:---:|:---:|
+| 0.9357 | 0.8344 | 0.6524 | 0.6570 | 0.5215 |
+
+The two layers tell different stories. The retriever reliably surfaces the right WSTG page
+(Recall@5 of 0.86). The generated answers are well grounded in the retrieved text (faithfulness
+0.94) and on topic (answer relevancy 0.83), but they agree with the reference answer only about
+two-thirds of the time (factual correctness 0.65), and passage-level context quality (precision
+0.66, recall 0.52) is the weakest area. Details and caveats are in [Part 2](#part-2-answer-quality-ragas).
 
 ---
 
 ## Architecture
 
 ```
-Ingestion:  WSTG Markdown → heading split → token chunks → embed (bge) → Pinecone + JSONL
-Retrieval:  BM25 (top 30) + Pinecone (top 25) → RRF (k=60) → Cohere rerank (top 20) → top 5
-Evaluation: offline retrieval metrics, 113 questions in 12 datasets, file-level relevance
-End-to-end: answer generation on the retrieved chunks, scored with RAGAS (29 questions)
+Ingestion:   WSTG Markdown → heading split → token chunks → embed (bge) → Pinecone + JSONL
+Retrieval:   BM25 (top 30) + Pinecone (top 25) → RRF (k=60) → Cohere rerank (top 20) → top 5
+Generation:  top-5 chunks → LLM answer
+Evaluation:  (1) retrieval metrics, 113 questions, 12 datasets, file-level relevance
+             (2) RAGAS answer quality, 29 questions, LLM judge via OpenRouter
 ```
 
 **Models:** `BAAI/bge-base-en-v1.5` embeddings (768-dim, local), Pinecone vector store,
@@ -21,13 +49,42 @@ BM25Okapi, Cohere `rerank-v4.0-fast`.
 **Corpus:** OWASP WSTG test-case pages (Markdown). Chunks keep `source`, `filename` and a
 `heading_path`; the title/ID block is merged with the first section.
 
+**Design notes**
+
+- **Hybrid candidate generation.** BM25 covers exact terms (tool names, payloads, test IDs) and
+  the dense index covers paraphrased questions. Their ranked lists are merged with RRF, which
+  works on ranks only and needs no score normalization.
+- **Rerank as a final precision stage.** Cohere reorders a candidate pool of 20 and the top 5 go
+  to the generator.
+- **Graceful degradation.** Cohere calls are throttled, retried, and fall back to RRF order with
+  a warning if a call fails, so a single API failure does not abort an evaluation run.
+
 ---
 
-## Evaluation Methodology
+## How Quality Is Measured
 
-Retrieval is scored **without an LLM judge**. Each question is labeled with the WSTG
-file(s) that contain its answer (`relevant_sources`). A retrieved chunk is relevant if
-its source file is labeled, and repeated chunks from one file count once.
+Retrieval and generation fail in different ways, so they are evaluated separately.
+
+| | Part 1: Retrieval | Part 2: Answer quality |
+|---|---|---|
+| **Question answered** | Does the right WSTG page reach the top 5? | Is the generated answer grounded, relevant and correct? |
+| **Method** | Offline metrics against labeled source files | RAGAS metrics scored by an LLM judge |
+| **LLM judge** | No | Yes (`nvidia/nemotron-3-ultra-550b-a55b:free` via OpenRouter) |
+| **Questions** | 113 (12 datasets) | 29 |
+| **Granularity** | File level | Chunk and claim level |
+
+The two sets of numbers measure different things and should not be compared directly. For
+example, file-level Recall@5 and RAGAS context recall are different quantities.
+
+---
+
+## Part 1: Retrieval Quality
+
+### Methodology
+
+Each question is labeled with the WSTG file(s) that contain its answer (`relevant_sources`). A
+retrieved chunk is relevant if its source file is labeled, and repeated chunks from one file
+count once. No LLM judge is involved.
 
 **Metrics (K = 5):**
 - **Normalized Precision@K**: relevant in top K / min(|R|, K), where R is the set of relevant sources
@@ -37,12 +94,8 @@ its source file is labeled, and repeated chunks from one file count once.
 - **NDCG@K**: binary relevance with a log₂ discount
 
 Raw Precision@5 is capped at 0.2 when a question has one relevant source, so normalized
-precision is reported instead. Each dataset is scored separately and the **12 dataset
-results are averaged with equal weight**. BM25 is evaluated as a baseline but not shown below.
-
----
-
-## Key Findings
+precision is reported instead. Each dataset is scored separately and the **12 dataset results
+are averaged with equal weight**. BM25 is evaluated as a baseline but not shown below.
 
 ### A. Chunk size 256 / overlap 64 (latest run)
 
@@ -52,8 +105,8 @@ results are averaged with equal weight**. BM25 is evaluated as a baseline but no
 | BM25 + vector + RRF | 0.8350 | 0.8343 | 0.8030 | 0.7942 | 0.8069 |
 | **BM25 + vector + RRF + Cohere** | **0.8558** | **0.8551** | **0.8510** | **0.8429** | **0.8478** |
 
-Cohere reranking is best on every metric. It reorders the same candidate pool, so the
-largest gain is in ranking quality (MRR 0.8030 → 0.8510 over RRF alone).
+Cohere reranking is best on every metric. It reorders the same candidate pool, so the largest
+gain is in ranking quality (MRR 0.8030 → 0.8510 over RRF alone).
 Full-precision values: [`average_metrics_normalized_chunk256_overlap64.csv`](average_metrics_normalized_chunk256_overlap64.csv).
 
 ### B. Chunk size 350 / overlap 50 (initial run)
@@ -70,68 +123,131 @@ Full-precision values: [`average_metrics_normalized_12_datasets.csv`](average_me
 ### A vs B: effect of the smaller chunks
 
 Smaller chunks help only the full pipeline, and only slightly (MRR +0.0056, NDCG +0.0042).
-They lower the scores of the other two methods: Pinecone recall drops 0.8551 → 0.8458, and
-RRF MRR drops 0.8144 → 0.8030.
+They lower the scores of the other two methods: Pinecone recall drops 0.8551 → 0.8458, and RRF
+MRR drops 0.8144 → 0.8030.
 
----
-
-## End-to-End Evaluation (RAGAS)
-
-The retrieval metrics above only tell me whether the right WSTG page shows up. They say
-nothing about the answer the LLM writes from those chunks, so I also ran RAGAS on a separate
-set of 29 questions.
-
-- **Questions:** 29
-- **Judge (LLM as a judge):** `nvidia/nemotron-3-ultra-550b-a55b:free`, set through `RAGAS_EVALUATOR_MODEL`
-- **Inference:** OpenRouter
-
-| Metric | Average (29 questions) |
-|---|:---:|
-| Context precision | 0.6570 |
-| Context recall | 0.5215 |
-| Faithfulness | 0.9357 |
-| Answer relevancy | 0.8344 |
-| Factual correctness | 0.6524 |
-
-What I take from this:
-
-- **Faithfulness is high (0.94).** 21 of the 29 answers scored 0.9 or above and the lowest was
-  0.76, so the model mostly sticks to what it was given instead of making things up.
-- **Answer relevancy is decent (0.83).** Scores ranged from about 0.68 to 0.995, and no
-  answer was completely off topic.
-- **Context precision (0.66) and recall (0.52) are the weak spots.** Seven questions got a 0
-  on each, and three got a 0 on both. In those cases the retrieved chunks just didn't
-  contain what the reference answer needed.
-- **Factual correctness (0.65) is all over the place.** It runs from 0.06 to 1.0, with 8
-  questions below 0.5.
-
-Put together, the answers are rarely invented. When one is wrong or incomplete, it is usually
-because the right context didn't make it into what the model saw, which points back at
-retrieval rather than generation.
-
-These numbers are not comparable to the Precision@5 / Recall@5 tables above. Those check
-file-level labels, while RAGAS has the judge LLM compare the retrieved text against a
-reference answer.
-
----
-
-## Takeaways
+### Retrieval takeaways
 
 1. **Reranking is worth it.** Cohere gives the best MRR, MAP and NDCG in both runs.
-2. **Chunk size matters less than the pipeline.** 256 / 64 gives the full pipeline a small
-   gain but hurts vector-only and RRF retrieval, so the best config depends on the stage.
-3. **RRF improves ranking over vector search alone** (MRR 0.8030 vs 0.7938 at 256 / 64) but
-   has slightly lower recall, so it needs the reranker to pay off.
-4. **End to end, retrieval is the weak link.** In the RAGAS run faithfulness is 0.94 but
-   context recall is only 0.52, so improving what gets retrieved should help more than
-   changing the generator.
+2. **Chunk size matters less than the pipeline.** 256 / 64 gives the full pipeline a small gain
+   but hurts vector-only and RRF retrieval, so the best config depends on the stage.
+3. **RRF improves ranking over vector search alone** (MRR 0.8030 vs 0.7938 at 256 / 64) but has
+   slightly lower recall, so it needs the reranker to pay off.
 
-Honest note: relevance labels are at file level, so this checks whether the right page is
-found, not the best passage. Averages are equal-weighted across datasets (not across the 113
-questions), and differences between configs are small (about 0.01 or less), so treat them as
-indicative. The RAGAS scores are a single run with a free judge model on 29 questions, so
-one question moving changes an average by around 0.03. Read them as a rough health check,
-not a benchmark.
+---
+
+## Part 2: Answer Quality (RAGAS)
+
+Retrieval metrics say whether the right page was found. They do not say whether the answer
+written from those chunks is grounded, relevant or correct, which is what a user actually sees.
+Part 2 measures that with [RAGAS](https://github.com/explodinggradients/ragas).
+
+### Setup
+
+- **Questions:** 29, each with a reference answer
+- **Judge (LLM as a judge):** `nvidia/nemotron-3-ultra-550b-a55b:free`, set through `RAGAS_EVALUATOR_MODEL`
+- **Inference:** OpenRouter
+- **Scale:** every metric is in [0, 1], higher is better
+
+| Metric | What it measures |
+|---|---|
+| Faithfulness | Share of claims in the answer that are supported by the retrieved context |
+| Answer relevancy | How directly the answer addresses the question |
+| Factual correctness | Claim-level agreement between the answer and the reference answer |
+| Context precision | Whether the useful retrieved chunks are ranked ahead of the noise |
+| Context recall | Share of the reference answer's claims that the retrieved context covers |
+
+### Results (29 questions)
+
+| Metric | Mean | Median | Std | Min | Max |
+|---|:---:|:---:|:---:|:---:|:---:|
+| Faithfulness | 0.9357 | 0.9583 | 0.070 | 0.760 | 1.000 |
+| Answer relevancy | 0.8344 | 0.8383 | 0.081 | 0.676 | 0.995 |
+| Factual correctness | 0.6524 | 0.7400 | 0.282 | 0.060 | 1.000 |
+| Context precision | 0.6570 | 0.9167 | 0.418 | 0.000 | 1.000 |
+| Context recall | 0.5215 | 0.6667 | 0.364 | 0.000 | 1.000 |
+
+### Analysis
+
+**Generation is grounded and on topic.**
+- Faithfulness is high and tightly clustered: 21 of 29 answers score 0.9 or above, 8 are
+  perfect, and the worst is 0.76. No answer is badly unsupported by its own context.
+- Answer relevancy has a narrow range (0.68 to 0.995) with no off-topic answers. This metric
+  rarely reaches 1.0 by construction, so 0.83 should not be read as 17% irrelevant.
+
+**Correctness is the metric with real headroom.**
+- Factual correctness has a median of 0.74 but a wide spread: 7 answers score 0.9 or above, 14
+  fall between 0.5 and 0.9, and 8 fall below 0.5 (the lowest is 0.06).
+- Of those 8 low-correctness answers, 6 have faithfulness of 0.9 or above. In other words, the
+  model usually stays consistent with its context even when that answer disagrees with the
+  reference. A faithful answer built on incomplete or off-target context is still a wrong answer.
+
+**Context precision and recall are bimodal.**
+- Context precision has 12 perfect scores and 7 zeros, which is why the median (0.92) sits far
+  above the mean (0.66). Context recall has 6 perfect scores and 7 zeros.
+- Three questions score 0 on both, meaning the retrieved context contained nothing useful for
+  the reference answer. These are the clearest retrieval failures in the set.
+- Only 4 of 29 questions score 0.9 or above on both context precision and context recall.
+
+**Retrieval scores explain correctness only weakly in this sample.**
+- Pearson correlations with factual correctness are low: 0.18 for context recall and 0.23 for
+  context precision. Mean factual correctness is 0.67 when context recall is at least 0.67
+  (n = 15) and 0.63 below it (n = 14).
+- With n = 29, only the faithfulness / answer-relevancy pair (r ≈ 0.51) clearly exceeds noise.
+  The other relationships are not statistically distinguishable from zero.
+- So the data does not support the claim that retrieval alone drives answer errors. Two
+  questions with context recall below 0.5 still reach factual correctness of 0.8 or higher.
+
+**Overall.** Only 1 of 29 questions scores 0.8 or above on all five metrics, but the pattern is
+asymmetric: grounding and relevance are strong, while correctness and context coverage are where
+the system loses points.
+
+### Reliability of these numbers
+
+- **Small sample.** The standard error of the mean is about 0.05 for factual correctness, 0.07
+  for context recall and 0.08 for context precision. One question moving from 0 to 1 shifts an
+  average by about 0.03.
+- **Single run, free judge.** One pass with a free-tier judge model, so some of the variance is
+  judge noise rather than system behavior. Repeated runs or a stronger judge would tighten this.
+- **Metric limits.** Claim-level correctness is sensitive to how the reference answer is
+  phrased, so some low scores may reflect wording differences rather than wrong answers.
+
+---
+
+## Combined Reading of the Results
+
+1. **The retriever is solid at page level.** Hybrid retrieval with reranking reaches 0.86
+   Recall@5 and 0.85 MRR@5, and the reranker is the single most useful component.
+2. **The generator is faithful, not necessarily correct.** High faithfulness (0.94) shows the
+   answers follow their context. Factual correctness (0.65) shows that following the context is
+   not enough when the context is incomplete.
+3. **Page-level success hides passage-level misses.** Retrieval is labeled at file level, so it
+   can score a hit even when the chunks shown to the generator lack the needed passage. The gap
+   between Part 1 (about 0.85) and RAGAS context precision and recall (0.66 and 0.52) is
+   consistent with that, although the two use different questions and definitions, so it is a
+   hypothesis and not a measurement.
+4. **Both layers are needed.** Retrieval metrics alone would have made this system look
+   stronger than its answers are.
+
+---
+
+## Limitations
+
+- Retrieval relevance labels are at file level. They check whether the right page is found, not
+  the best passage.
+- Retrieval averages are equal-weighted across datasets, not across the 113 questions, and
+  differences between configs are small (about 0.01 or less), so treat them as indicative.
+- The RAGAS evaluation covers 29 questions, one run, and a free judge model, so treat it as a
+  health check and not a benchmark.
+- The two evaluations use different question sets, so their scores are not directly comparable.
+
+## Next Steps
+
+- Review the 8 low-correctness answers by hand to separate retrieval gaps, reference-phrasing
+  artifacts and judge noise.
+- Add passage-level relevance labels so retrieval can be scored on chunks, not files.
+- Repeat the RAGAS run, and compare against a stronger judge, to measure judge variance.
+- Grow the RAGAS question set beyond 29 so per-metric differences become resolvable.
 
 ---
 
