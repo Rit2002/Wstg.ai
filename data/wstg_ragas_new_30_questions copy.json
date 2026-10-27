@@ -1,0 +1,223 @@
+{
+  "dataset_name": "OWASP WSTG RAG Answer Quality Evaluation - New 30 Questions",
+  "purpose": "Newly authored question set for RAGAS answer-quality evaluation.",
+  "evaluation_type": "answer_quality",
+  "notes": [
+    "Each query contains question and reference_answer fields for the answer-quality evaluator.",
+    "Reference answers are concise targets; equivalent correct wording is acceptable.",
+    "relevant_sources is omitted because this dataset is intended for answer-quality metrics, not source-labelled retrieval metrics.",
+    "Manually verify reference answers against the exact WSTG Markdown corpus before reporting formal results."
+  ],
+  "queries": [
+    {
+      "id": "WSTG-RAGAS-NEW-001",
+      "wstg_id": "WSTG-INFO-01",
+      "category": "Information Gathering",
+      "question": "How can reviewing a web application's publicly accessible footprint help define the scope of a security test?",
+      "reference_answer": "Review public pages, entry points, linked resources, exposed files, and visible technologies to understand the application's structure. Use these findings to identify likely test targets, while confirming that each target is within the authorized scope."
+    },
+    {
+      "id": "WSTG-RAGAS-NEW-002",
+      "wstg_id": "WSTG-INFO-02",
+      "category": "Information Gathering",
+      "question": "What can HTTP response headers reveal during web server fingerprinting, and what are their limitations?",
+      "reference_answer": "Response headers may disclose server products, frameworks, proxy layers, or version information. Headers can be removed, customized, or misleading, so corroborate them with other observations rather than treating a banner alone as proof of a vulnerability."
+    },
+    {
+      "id": "WSTG-RAGAS-NEW-003",
+      "wstg_id": "WSTG-INFO-03",
+      "category": "Information Gathering",
+      "question": "Why should a tester inspect robots.txt and sitemap files, and why are they not access controls?",
+      "reference_answer": "Robots.txt and sitemap files can reveal paths, application areas, or resources worth reviewing. Robots directives guide crawlers; they do not enforce authorization. Sensitive paths still require server-side access controls."
+    },
+    {
+      "id": "WSTG-RAGAS-NEW-004",
+      "wstg_id": "WSTG-CONF-01",
+      "category": "Configuration and Deployment",
+      "question": "What should a tester look for when checking whether unnecessary HTTP methods are enabled?",
+      "reference_answer": "Identify the methods accepted by the server and application, then determine whether each is required. Review unexpected methods such as PUT, DELETE, or TRACE in context and verify whether they permit unintended actions or disclose information. An enabled method is not automatically a vulnerability without assessing its behavior and access controls."
+    },
+    {
+      "id": "WSTG-RAGAS-NEW-005",
+      "wstg_id": "WSTG-CONF-02",
+      "category": "Configuration and Deployment",
+      "question": "How can verbose error pages and stack traces create security risk, and what should a tester record?",
+      "reference_answer": "Verbose errors can expose filesystem paths, framework versions, SQL statements, internal hostnames, or call stacks. Trigger errors safely within scope, record the exposed information and conditions, and distinguish internal details exposed to users from generic error handling."
+    },
+    {
+      "id": "WSTG-RAGAS-NEW-006",
+      "wstg_id": "WSTG-CONF-03",
+      "category": "Configuration and Deployment",
+      "question": "How should a tester assess whether directory listing is unnecessarily exposed?",
+      "reference_answer": "Request directories that may lack a default index resource and inspect whether the server lists their contents. Determine whether filenames or downloadable files reveal sensitive information or expand the attack surface. Verify impact rather than assuming every listing exposes sensitive data."
+    },
+    {
+      "id": "WSTG-RAGAS-NEW-007",
+      "wstg_id": "WSTG-ATHN-01",
+      "category": "Authentication",
+      "question": "How can differences in login and password-recovery responses enable account enumeration?",
+      "reference_answer": "Compare response messages, status codes, timing, and other observable behavior for existing and nonexistent accounts using authorized test cases. Differences may reveal valid usernames or email addresses. Effective defenses make responses and processing sufficiently consistent."
+    },
+    {
+      "id": "WSTG-RAGAS-NEW-008",
+      "wstg_id": "WSTG-ATHN-02",
+      "category": "Authentication",
+      "question": "What properties should a secure password-reset token have, and how can a tester review its handling?",
+      "reference_answer": "A reset token should be unpredictable, tied to the intended account and reset operation, expire appropriately, and become unusable after successful use or invalidation. Review exposure, reuse, expiration, account binding, and whether reset flows allow unauthorized password changes."
+    },
+    {
+      "id": "WSTG-RAGAS-NEW-009",
+      "wstg_id": "WSTG-ATHN-03",
+      "category": "Authentication",
+      "question": "How should a tester evaluate whether multi-factor authentication is consistently enforced?",
+      "reference_answer": "Check that the second factor is required wherever policy expects it, including alternate login routes, recovery flows, and sensitive actions. Test whether a session obtained before completing the second factor can access protected resources and whether recovery options weaken the control."
+    },
+    {
+      "id": "WSTG-RAGAS-NEW-010",
+      "wstg_id": "WSTG-SESS-01",
+      "category": "Session Management",
+      "question": "What should a tester examine about the Secure, HttpOnly, and SameSite cookie attributes?",
+      "reference_answer": "Secure restricts cookie transmission to HTTPS, HttpOnly prevents ordinary client-side scripts from reading the cookie, and SameSite controls when cookies accompany cross-site requests. Review these attributes with cookie scope and application behavior; they reduce particular risks but do not replace server-side session security or authorization."
+    },
+    {
+      "id": "WSTG-RAGAS-NEW-011",
+      "wstg_id": "WSTG-SESS-02",
+      "category": "Session Management",
+      "question": "How can a tester determine whether a session identifier is regenerated after authentication or a privilege change?",
+      "reference_answer": "Record the session identifier before authentication or a privilege transition and compare it afterward. If the same attacker-influenced identifier remains valid, session fixation may be possible. Verify whether the old identifier is invalidated and the new session is bound to the authenticated state."
+    },
+    {
+      "id": "WSTG-RAGAS-NEW-012",
+      "wstg_id": "WSTG-SESS-03",
+      "category": "Session Management",
+      "question": "How should a tester verify logout and session expiration behavior?",
+      "reference_answer": "Log out and attempt to reuse the previous session token against protected resources. Also test idle and absolute expiration where applicable. A secure implementation invalidates sessions server-side when required and rejects expired or logged-out tokens."
+    },
+    {
+      "id": "WSTG-RAGAS-NEW-013",
+      "wstg_id": "WSTG-ATHZ-05",
+      "category": "Authorization",
+      "question": "Why is hiding an administrative button in the frontend insufficient to enforce authorization?",
+      "reference_answer": "Frontend visibility can be bypassed by sending requests directly. The server must verify identity, role, and permissions for every protected operation and resource. Test with lower-privileged sessions and confirm that forbidden operations are rejected server-side."
+    },
+    {
+      "id": "WSTG-RAGAS-NEW-014",
+      "wstg_id": "WSTG-ATHZ-06",
+      "category": "Authorization",
+      "question": "How can mass assignment lead to authorization or integrity problems in an API?",
+      "reference_answer": "Mass assignment occurs when client-supplied fields are bound to internal objects without restricting which fields may change. Check whether protected properties such as role, ownership, price, or account status can be modified. Server-side allowlists and explicit authorization for sensitive fields help mitigate the risk."
+    },
+    {
+      "id": "WSTG-RAGAS-NEW-015",
+      "wstg_id": "WSTG-INPV-01",
+      "category": "Input Validation",
+      "question": "Why must output encoding be appropriate to the context where untrusted data is inserted?",
+      "reference_answer": "HTML text, attributes, JavaScript, CSS, and URL contexts have different parsing rules. Encoding suitable for one context may not protect another. Identify where untrusted input is reflected and verify context-appropriate encoding or safe APIs rather than relying on a single generic filter."
+    },
+    {
+      "id": "WSTG-RAGAS-NEW-016",
+      "wstg_id": "WSTG-INPV-02",
+      "category": "Input Validation",
+      "question": "What is the security significance of server-side template injection, and how can a tester distinguish it from ordinary reflection?",
+      "reference_answer": "Server-side template injection can occur when user-controlled data is interpreted as template syntax. Use safe expressions appropriate to the authorized environment and observe whether the server evaluates them rather than merely returning input as text. Avoid unnecessary command execution or data access."
+    },
+    {
+      "id": "WSTG-RAGAS-NEW-017",
+      "wstg_id": "WSTG-INPV-03",
+      "category": "Input Validation",
+      "question": "How can a tester assess whether an uploaded file is validated by content rather than only by its filename extension?",
+      "reference_answer": "Compare handling of allowed and disallowed extensions, MIME types, and file content using harmless test files. Review server-side validation and whether uploaded files are stored and served safely. Filename extensions and client-supplied Content-Type values alone do not reliably establish file content."
+    },
+    {
+      "id": "WSTG-RAGAS-NEW-018",
+      "wstg_id": "WSTG-INPV-04",
+      "category": "Input Validation",
+      "question": "What risks arise when an application fetches a URL supplied by a user, and what should an SSRF test examine?",
+      "reference_answer": "Server-side request forgery may occur when a server fetches attacker-influenced destinations and can reach resources the user cannot access directly. In an authorized test, examine URL validation, redirects, DNS resolution, destination restrictions, and controlled internal targets. Mitigations include strict destination allowlists and network egress controls."
+    },
+    {
+      "id": "WSTG-RAGAS-NEW-019",
+      "wstg_id": "WSTG-INPV-05",
+      "category": "Input Validation",
+      "question": "Why should XML external entity processing be reviewed when an application accepts XML?",
+      "reference_answer": "Unsafe XML parser configuration may allow external entities to cause local file disclosure, server-side requests, or denial of service. Review parser settings and use controlled, harmless test payloads in an authorized environment. Disable unnecessary external entity resolution and apply parser and resource limits."
+    },
+    {
+      "id": "WSTG-RAGAS-NEW-020",
+      "wstg_id": "WSTG-BUSL-01",
+      "category": "Business Logic",
+      "question": "How can skipping workflow steps reveal a business logic vulnerability?",
+      "reference_answer": "A workflow vulnerability may occur when the application trusts the client to follow a prescribed sequence. Test whether later actions can be called directly, steps repeated, or approvals bypassed. The server should enforce state transitions and business rules independently of the user interface."
+    },
+    {
+      "id": "WSTG-RAGAS-NEW-021",
+      "wstg_id": "WSTG-BUSL-02",
+      "category": "Business Logic",
+      "question": "What should a tester look for when assessing whether transaction values can be manipulated across multiple requests?",
+      "reference_answer": "Observe how quantity, price, discount, balance, and transaction state are supplied, recalculated, and persisted. Test whether client-side values are trusted, limits enforced server-side, or request order and repetition produce invalid results. Prefer test accounts and non-production transactions."
+    },
+    {
+      "id": "WSTG-RAGAS-NEW-022",
+      "wstg_id": "WSTG-CLNT-01",
+      "category": "Client-Side Testing",
+      "question": "How should a tester assess whether cross-origin resource sharing is configured too broadly?",
+      "reference_answer": "Inspect CORS response headers for different Origin values and determine whether arbitrary origins are reflected or credentials are allowed with an unsafe origin policy. Review allowed methods and headers. Risk depends on exposed resources and browser credentials; CORS headers alone do not prove a vulnerability."
+    },
+    {
+      "id": "WSTG-RAGAS-NEW-023",
+      "wstg_id": "WSTG-CLNT-02",
+      "category": "Client-Side Testing",
+      "question": "How can a tester assess whether clickjacking protections are present and effective?",
+      "reference_answer": "Review the Content-Security-Policy frame-ancestors directive and X-Frame-Options header, then test whether sensitive pages can be embedded by an untrusted origin in a controlled environment. Assess important authenticated workflows because missing or inconsistent framing controls may enable deceptive overlays."
+    },
+    {
+      "id": "WSTG-RAGAS-NEW-024",
+      "wstg_id": "WSTG-CLNT-03",
+      "category": "Client-Side Testing",
+      "question": "What security issues can arise when sensitive information is stored in browser local storage?",
+      "reference_answer": "Local storage is accessible to JavaScript running in the origin, so XSS may expose stored tokens or personal information. Review what sensitive values are stored, how long they persist, and whether they are necessary. Minimize client-side secrets and retain appropriate server-side session and authorization controls."
+    },
+    {
+      "id": "WSTG-RAGAS-NEW-025",
+      "wstg_id": "WSTG-CRYP-01",
+      "category": "Cryptography",
+      "question": "What should a tester verify when reviewing a web application's TLS configuration?",
+      "reference_answer": "Review whether HTTPS is consistently used, certificates are valid and match hostnames, and obsolete protocol versions or weak cipher configurations are enabled. Consider certificate chains, HTTP redirects, and secure-cookie behavior. Report concrete configuration weaknesses rather than assuming TLS alone guarantees application security."
+    },
+    {
+      "id": "WSTG-RAGAS-NEW-026",
+      "wstg_id": "WSTG-CRYP-02",
+      "category": "Cryptography",
+      "question": "Why is storing passwords with a fast general-purpose hash unsuitable, and what should a tester review?",
+      "reference_answer": "Fast hashes allow large numbers of password guesses to be tested quickly if a password database is exposed. Password storage should use a password-hashing scheme designed to be slow and preferably memory-hard, with a unique salt per password and appropriate parameters. Review the implementation without exposing real credentials."
+    },
+    {
+      "id": "WSTG-RAGAS-NEW-027",
+      "wstg_id": "WSTG-APIT-01",
+      "category": "API Testing",
+      "question": "Why should API authorization be tested separately for each operation and object, even when the API requires authentication?",
+      "reference_answer": "Authentication establishes identity but does not grant permission to every operation or object. Test read, create, update, and delete operations with accounts of different roles and ownership. The API should enforce object-level and function-level authorization on the server for each request."
+    },
+    {
+      "id": "WSTG-RAGAS-NEW-028",
+      "wstg_id": "WSTG-APIT-02",
+      "category": "API Testing",
+      "question": "What should a tester inspect when an API returns more fields or records than a client interface displays?",
+      "reference_answer": "Inspect complete API responses for sensitive or unnecessary properties and records, including fields omitted by the user interface. Determine whether the extra data is authorized and whether the API exposes more than the client needs. Server-side response shaping and object-level authorization should limit data exposure."
+    },
+    {
+      "id": "WSTG-RAGAS-NEW-029",
+      "wstg_id": "WSTG-ERRH-01",
+      "category": "Error Handling",
+      "question": "How can inconsistent error handling disclose security-relevant information or create an authentication bypass?",
+      "reference_answer": "Different failures may produce distinct messages, status codes, response sizes, or timing that reveal internal state, account validity, or processing paths. Compare relevant error paths and verify that failures do not leak sensitive details or allow requests to proceed in an unauthorized state."
+    },
+    {
+      "id": "WSTG-RAGAS-NEW-030",
+      "wstg_id": "WSTG-ARCH-01",
+      "category": "Architecture and Security Controls",
+      "question": "Why should a tester trace trust boundaries and data flows when evaluating a web application's security?",
+      "reference_answer": "Mapping data flows and trust boundaries helps identify where untrusted input enters, where identity and authorization decisions occur, and where sensitive data crosses components. Use the map to select tests for validation, access control, logging, and integrations. Verify architecture assumptions against observed behavior and implementation evidence."
+    }
+  ]
+}

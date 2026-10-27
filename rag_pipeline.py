@@ -189,7 +189,6 @@ def generate_answer_stream(query: str, k: int = TOP_K):
                 },
             ],
             temperature = 0.2,
-            max_tokens = 2000,
             stream = True
         )
 
@@ -241,6 +240,10 @@ def generate_answer_stream(query: str, k: int = TOP_K):
         "sources": cited_sources,
         "citation_validation": citation_validation,
         "model": os.getenv("TOKENHARBOR_MODEL"),
+        "retrieved_contexts" : [
+            doc.page_content for doc in documents
+        ],
+        "available_source_ids" : list(source_registry.keys()),
     }
 
 

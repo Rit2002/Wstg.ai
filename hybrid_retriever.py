@@ -205,7 +205,7 @@ def retrieve_stages(
         bm25_k: int = 30,
         vector_k: int = 25,
         candidate_k: int = 20,
-) -> list[Document]:
+) -> dict[str, object]:
     """
     Return top-k chunks for each ablation stage.
 

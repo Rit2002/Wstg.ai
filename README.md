@@ -4,16 +4,6 @@ A hybrid retrieval pipeline (BM25 + Pinecone + RRF + Cohere rerank) over the
 [OWASP Web Security Testing Guide](https://github.com/OWASP/wstg), with an offline
 **evaluation harness** on 113 questions and a chunk-size comparison, not just a demo.
 
----
-
-## What Makes This Different
-
-| Typical student RAG project | WSTG Intelligence |
-|---|---|
-| Vector search only | BM25 + dense + RRF fusion + Cohere reranking |
-| "It works!" | Quantified: Normalized Precision, Recall, MRR, MAP, NDCG on 113 questions |
-| One fixed config | Compared chunk size / overlap: 256 / 64 vs 350 / 50 |
-| Re-run everything to re-score | Collect rankings once, re-score offline anytime |
 
 ---
 
@@ -23,6 +13,7 @@ A hybrid retrieval pipeline (BM25 + Pinecone + RRF + Cohere rerank) over the
 Ingestion:  WSTG Markdown → heading split → token chunks → embed (bge) → Pinecone + JSONL
 Retrieval:  BM25 (top 30) + Pinecone (top 25) → RRF (k=60) → Cohere rerank (top 20) → top 5
 Evaluation: offline retrieval metrics, 113 questions in 12 datasets, file-level relevance
+End-to-end: answer generation on the retrieved chunks, scored with RAGAS (29 questions)
 ```
 
 **Models:** `BAAI/bge-base-en-v1.5` embeddings (768-dim, local), Pinecone vector store,
@@ -84,6 +75,46 @@ RRF MRR drops 0.8144 → 0.8030.
 
 ---
 
+## End-to-End Evaluation (RAGAS)
+
+The retrieval metrics above only tell me whether the right WSTG page shows up. They say
+nothing about the answer the LLM writes from those chunks, so I also ran RAGAS on a separate
+set of 29 questions.
+
+- **Questions:** 29
+- **Judge (LLM as a judge):** `nvidia/nemotron-3-ultra-550b-a55b:free`, set through `RAGAS_EVALUATOR_MODEL`
+- **Inference:** OpenRouter
+
+| Metric | Average (29 questions) |
+|---|:---:|
+| Context precision | 0.6570 |
+| Context recall | 0.5215 |
+| Faithfulness | 0.9357 |
+| Answer relevancy | 0.8344 |
+| Factual correctness | 0.6524 |
+
+What I take from this:
+
+- **Faithfulness is high (0.94).** 21 of the 29 answers scored 0.9 or above and the lowest was
+  0.76, so the model mostly sticks to what it was given instead of making things up.
+- **Answer relevancy is decent (0.83).** Scores ranged from about 0.68 to 0.995, and no
+  answer was completely off topic.
+- **Context precision (0.66) and recall (0.52) are the weak spots.** Seven questions got a 0
+  on each, and three got a 0 on both. In those cases the retrieved chunks just didn't
+  contain what the reference answer needed.
+- **Factual correctness (0.65) is all over the place.** It runs from 0.06 to 1.0, with 8
+  questions below 0.5.
+
+Put together, the answers are rarely invented. When one is wrong or incomplete, it is usually
+because the right context didn't make it into what the model saw, which points back at
+retrieval rather than generation.
+
+These numbers are not comparable to the Precision@5 / Recall@5 tables above. Those check
+file-level labels, while RAGAS has the judge LLM compare the retrieved text against a
+reference answer.
+
+---
+
 ## Takeaways
 
 1. **Reranking is worth it.** Cohere gives the best MRR, MAP and NDCG in both runs.
@@ -91,24 +122,29 @@ RRF MRR drops 0.8144 → 0.8030.
    gain but hurts vector-only and RRF retrieval, so the best config depends on the stage.
 3. **RRF improves ranking over vector search alone** (MRR 0.8030 vs 0.7938 at 256 / 64) but
    has slightly lower recall, so it needs the reranker to pay off.
+4. **End to end, retrieval is the weak link.** In the RAGAS run faithfulness is 0.94 but
+   context recall is only 0.52, so improving what gets retrieved should help more than
+   changing the generator.
 
 Honest note: relevance labels are at file level, so this checks whether the right page is
 found, not the best passage. Averages are equal-weighted across datasets (not across the 113
 questions), and differences between configs are small (about 0.01 or less), so treat them as
-indicative.
+indicative. The RAGAS scores are a single run with a free judge model on 29 questions, so
+one question moving changes an average by around 0.03. Read them as a rough health check,
+not a benchmark.
 
 ---
 
 ## Setup
 
 ```bash
-pip install python-dotenv rank-bm25 cohere transformers \
+pip install python-dotenv rank-bm25 cohere transformers ragas \
     langchain-core langchain-huggingface langchain-pinecone langchain-text-splitters
-# create .env with:  PINECONE_API_KEY=...   COHERE_API_KEY=...
+# create .env with:  PINECONE_API_KEY=...   COHERE_API_KEY=...   OPENROUTER_API_KEY=...
 ```
 
 Optional overrides: `EMBEDDING_MODEL`, `PINECONE_INDEX_NAME`, `PINECONE_NAMESPACE`,
-`COHERE_RERANK_MODEL`, `WSTG_REPO_PATH`.
+`COHERE_RERANK_MODEL`, `WSTG_REPO_PATH`, `RAGAS_EVALUATOR_MODEL`.
 
 ## Run Order
 
@@ -124,6 +160,9 @@ python collect_retrieval_results.py --dataset <dataset_path> --output-dir <outpu
 
 # 3. Evaluate retrieval metrics
 python evaluate_retrieval_results.py --dataset <dataset_path> --retrieval-dir <output_dir> --output-dir <output_dir>/evaluation
+
+# 4. (Optional) End-to-end RAGAS evaluation, judged through OpenRouter
+python evaluate_ragas.py
 ```
 
 **Example** for `wstg_injection_testing_eval_20.json`:
@@ -149,6 +188,7 @@ python evaluate_retrieval_results.py --dataset data/wstg_injection_testing_eval_
 ├── utils.py                       # chunk key for fusion/caching
 ├── collect_retrieval_results.py   # Part A: save ranked results
 ├── evaluate_retrieval_results.py  # Part B: compute metrics
+├── evaluate_ragas.py              # end-to-end RAGAS scoring (LLM judge via OpenRouter)
 ├── average_metrics_normalized_*.csv  # averaged results per chunk config
 └── data/                          # wstg_chunks.jsonl + evaluation datasets
 ```
