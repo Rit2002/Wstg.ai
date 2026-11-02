@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 from openai import OpenAI
 
 from hybrid_retriever import hybrid_retrieve
+from observability import observe, flush_traces
 
 
 load_dotenv()
@@ -141,110 +142,163 @@ def generate_answer_stream(query: str, k: int = TOP_K):
     if not isinstance(k, int) or isinstance(k, bool) or k < 1:
         raise ValueError("k must be a positive integer.")
 
-
-# 1. Retrieve and rerank documents using the existing pipeline.
-    documents = hybrid_retrieve(query=query, k=k)
-
-    if not documents:
-
-        yield {
-            "type": "token",
-            "content": "I could not retrieve relevant WSTG documentation."
-        }
-
-        yield {
-            "type": "done",
-            "sources": [],
-            "citation_validation": {
-                "status": "no_retrieved_context",
-                "cited_source_ids": [],
-                "invalid_source_ids": [],
-            },
-            "model": os.getenv("TOKENHARBOR_MODEL", "deepseek-v4.1-flash:free"),
-        }
-
-        return
-
-# 2. Build context with source identifiers and metadata.
-    context, source_registry = build_context(documents)
-
-
-# 3. Generate the answer.
     try:
-        stream = client.chat.completions.create(
-            model=os.getenv("TOKENHARBOR_MODEL", "deepseek-v4.1-flash:free"),
-            messages=[
+        # Root observation
+        with observe(
+            name="wstg-rag-query",
+            input_data={
+                "query_length" : len(query),
+            },
+            metadata={
+                "top_k" : k,
+            },
+        ) as trace:
+            # 1. Retrieve and rerank documents using the existing pipeline.
+
+            documents = hybrid_retrieve(query=query, k=k)
+
+            if trace is not None:
+                trace.update(
+                    output={
+                        "retrieved_document_count" : len(documents),
+                    }
+                )
+
+            if not documents:
+
+                yield {
+                    "type": "token",
+                    "content": "I could not retrieve relevant WSTG documentation."
+                }
+
+                yield {
+                    "type": "done",
+                    "sources": [],
+                    "citation_validation": {
+                        "status": "no_retrieved_context",
+                        "cited_source_ids": [],
+                        "invalid_source_ids": [],
+                    },
+                    "model": os.getenv("TOKENHARBOR_MODEL", "deepseek-v4.1-flash:free"),
+                }
+
+                return
+
+        # 2. Build context with source identifiers and metadata.
+            context, source_registry = build_context(documents)
+
+
+        # 3. Generate the answer.
+            try:
+                model_name=os.getenv(
+                    "TOKENHARBOR_MODEL", 
+                    "deepseek-v4.1-flash:free"
+                )
+
+
+                with observe(
+                    name="llm-generation",
+                    as_type="generation",
+                    input_data={
+                        "query": query,
+                        "context": context
+                    },
+                    metadata={"temperature": 0.2},
+                    model=model_name
+                ) as generation:
+
+                    stream = client.chat.completions.create(
+                        model=model_name,
+                        messages=[
+                            {
+                                "role" : "system",
+                                "content" : SYSTEM_PROMPT
+                            },
+                            {
+                                "role" : "user",
+                                "content" : (
+                                    f"Questions:\n{query.strip()}\n\n"
+                                    f"Retrieved WSTG context:\n{context}\n\n"
+                                    "Answer the question using this context and "
+                                    "cite supporting claims with [S1], [S2], etc."
+                                ),
+                            },
+                        ],
+                        temperature = 0.2,
+                        stream = True
+                    )
+
+                    answer_parts = []
+
+                    for chunk in stream:
+
+                        if not chunk.choices:
+                            continue
+
+                        content = chunk.choices[0].delta.content
+
+                        if content:
+                            answer_parts.append(content)
+                            yield {"type": "token", "content": content}
+
+                    answer = "".join(answer_parts).strip()
+
+                    if not answer:
+                        print(f"\n\n{answer}")
+                        raise RuntimeError("The model returned an empty answer.")
+
+                    if generation is not None:
+                        generation.update(output=answer)
+                
+            except Exception as exc:
+                print("\n===== TOKENHARBOR ERROR =====", flush=True)
+                print("Error type:", type(exc).__name__, flush=True)
+                print("Error details:", repr(exc), flush=True)
+                traceback.print_exc()
+                print("=============================\n", flush=True)
+                raise
+
+        # 4. Check citation IDs against the supplied context.
+            citation_validation = validate_citations(
+                answer,
+                source_registry,
+            )
+
+        # Only expose sources the model cited, plus a clear validation result.
+            cited_sources = [
                 {
-                    "role" : "system",
-                    "content" : SYSTEM_PROMPT
-                },
-                {
-                    "role" : "user",
-                    "content" : (
-                        f"Questions:\n{query.strip()}\n\n"
-                        f"Retrieved WSTG context:\n{context}\n\n"
-                        "Answer the question using this context and "
-                        "cite supporting claims with [S1], [S2], etc."
-                    ),
-                },
-            ],
-            temperature = 0.2,
-            stream = True
-        )
+                    "id" : source_id,
+                    **source_registry[source_id],
+                }
+                for source_id in citation_validation["cited_source_ids"]
+                if source_id in source_registry
+            ]
 
-        answer_parts = []
-
-        for chunk in stream:
-
-            if not chunk.choices:
-                continue
-
-            content = chunk.choices[0].delta.content
-
-            if content:
-                answer_parts.append(content)
-                yield {"type": "token", "content": content}
-
-        answer = "".join(answer_parts).strip()
-
-        if not answer:
-            print(f"\n\n{answer}")
-            raise RuntimeError("The model returned an empty answer.")
-    except Exception as exc:
-        print("\n===== TOKENHARBOR ERROR =====", flush=True)
-        print("Error type:", type(exc).__name__, flush=True)
-        print("Error details:", repr(exc), flush=True)
-        traceback.print_exc()
-        print("=============================\n", flush=True)
-        raise
-
-# 4. Check citation IDs against the supplied context.
-    citation_validation = validate_citations(
-        answer,
-        source_registry,
-    )
-
- # Only expose sources the model cited, plus a clear validation result.
-    cited_sources = [
-        {
-            "id" : source_id,
-            **source_registry[source_id],
-        }
-        for source_id in citation_validation["cited_source_ids"]
-        if source_id in source_registry
-    ]
+            if trace is not None:
+                trace.update(
+                    output={
+                        "citation_status": citation_validation["status"],
+                        "cited_source_count": len(cited_sources),
+                    }
+                )
 
 
-    yield {
-        "type" : "done",
-        "sources": cited_sources,
-        "citation_validation": citation_validation,
-        "model": os.getenv("TOKENHARBOR_MODEL"),
-        "retrieved_contexts" : [
-            doc.page_content for doc in documents
-        ],
-        "available_source_ids" : list(source_registry.keys()),
-    }
+            yield {
+                "type" : "done",
+                "sources": cited_sources,
+                "citation_validation": citation_validation,
+                "model": os.getenv("TOKENHARBOR_MODEL"),
+                "retrieved_contexts" : [
+                    doc.page_content for doc in documents
+                ],
+                "available_source_ids" : list(source_registry.keys()),
+            }
+
+    finally:
+        try:
+            flush_traces()
+        except Exception as exc:
+            print(f"Langfuse trace flushing failed: {exc}", flush=True)
 
 
 

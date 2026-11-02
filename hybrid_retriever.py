@@ -23,6 +23,7 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_pinecone import PineconeVectorStore
 from utils import document_key
 from reranker import cohere_rerank_with_status
+from observability import observe, flush_traces
 
 
 load_dotenv()
@@ -224,39 +225,76 @@ def retrieve_stages(
         raise ValueError("k and candidate_k must be positive integers.")
 
     # Stage 1: BM25 keyword retrieval.
-    query_tokens = tokenize(query)
-    bm25_scores = bm25.get_scores(query_tokens)
 
-    # range(len(bm25_scores)) : len(bm25_scores) returns 4 & range(4) generates list of indices [0, 1, 2, 3].
-    # Sorts the generated list, uses bm25_scores as criteria
-    bm25_indices = sorted(
-        range(len(bm25_scores)),
-        key = lambda index: bm25_scores[index],
-        reverse = True
-    )[:bm25_k]
+    with observe(
+        name="bm25-retrieval",
+        metadata={
+            "candidate_limit" : bm25_k
+        }
+    ) as span:
+        query_tokens = tokenize(query)
+        bm25_scores = bm25.get_scores(query_tokens)
 
-    bm25_candidates = [
-        documents[index]
-        for index in bm25_indices
-        if bm25_scores[index] > 0
-    ]
+        # range(len(bm25_scores)) : len(bm25_scores) returns 4 & range(4) generates list of indices [0, 1, 2, 3].
+        # Sorts the generated list, uses bm25_scores as criteria
+        bm25_indices = sorted(
+            range(len(bm25_scores)),
+            key = lambda index: bm25_scores[index],
+            reverse = True
+        )[:bm25_k]
+    
+        bm25_candidates = [
+            documents[index]
+            for index in bm25_indices
+            if bm25_scores[index] > 0
+        ]
+
+        if span is not None:
+            span.update(
+                output={"candidate_count": len(bm25_candidates)}
+            )
+
+ 
 
 
 
     # Stage 2. Dense semantic retrieval from existing Pinecone vectors
-    vector_candidates = vector_store.similarity_search(
-        query=query,
-        k=vector_k,
-    )
+
+    with observe(
+        name="pinecone-retrieval",
+        metadata={"top_k": vector_k},
+    ) as span:
+
+        vector_candidates = vector_store.similarity_search(
+            query=query,
+            k=vector_k,
+        )
+        if span is not None:
+            span.update(
+                output={"candidate_count": len(vector_candidates)}
+            )
 
     # Stage 3. Fuse the rankings
-    fused_candidates = reciprocal_rank_fusion(
-        [bm25_candidates, vector_candidates]
-    )
-    # Exclude reference section
-    fused_candidates = remove_reference_sections(
-        fused_candidates
-    )
+
+    with observe(
+        name="rrf-fusion",
+        metadata={"rrf_k": RRF_K},
+    ) as span:
+        
+        fused_candidates = reciprocal_rank_fusion(
+            [bm25_candidates, vector_candidates]
+        )
+
+
+        # Exclude reference section
+        fused_candidates = remove_reference_sections(
+            fused_candidates
+        )
+
+        if span is not None:
+            span.update(
+                output={"candidate_count": len(fused_candidates)}
+            )
 
    
 

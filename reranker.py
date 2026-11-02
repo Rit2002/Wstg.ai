@@ -6,6 +6,7 @@ from typing import Any
 from dotenv import load_dotenv
 from langchain_core.documents import Document
 from utils import document_key
+from observability import observe
 
 load_dotenv()
 
@@ -74,14 +75,34 @@ def cohere_rerank_with_status(
 
         try:
             _last_call_time = time.monotonic()
-            response = _get_client().rerank(
-                model=COHERE_RERANK_MODEL,
-                query=query,
-                documents=texts,
-                top_n=len(candidates)
-            )
 
-            ranked_results = []
+
+            with observe(
+                name="cohere-reranking",
+                input_data={
+                    "candidate_count": len(candidates),
+                },
+                metadata={
+                    "top_n": top_n
+                },
+                model=COHERE_RERANK_MODEL
+            ) as span:
+                
+
+                response = _get_client().rerank(
+                    model=COHERE_RERANK_MODEL,
+                    query=query,
+                    documents=texts,
+                    top_n=len(candidates)
+                )
+
+                if span is not None:
+                    span.update(
+                        output={
+                            "status": "success",
+                            "returned_count": min(len(response.results), top_n),
+                        }
+                    )
 
 
             # Return only the requested number of final documents.
@@ -111,6 +132,7 @@ def cohere_rerank_with_status(
             return ranked_docs, status
         
         except Exception as exc:
+            last_error = exc
             status = getattr(exc, "status_code", None)
             if status == 429 and attempt < 2:
                 time.sleep(2 ** (attempt + 1))   # 2s, then 4s
