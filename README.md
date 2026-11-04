@@ -36,7 +36,7 @@ two-thirds of the time (factual correctness 0.65), and passage-level context qua
 
 ## Architecture
 
-```
+```text
 Ingestion:   WSTG Markdown → heading split → token chunks → embed (bge) → Pinecone + JSONL
 Retrieval:   BM25 (top 30) + Pinecone (top 25) → RRF (k=60) → Cohere rerank (top 20) → top 5
 Generation:  top-5 chunks → LLM answer
@@ -46,6 +46,7 @@ Evaluation:  (1) retrieval metrics, 113 questions, 12 datasets, file-level relev
 
 **Models:** `BAAI/bge-base-en-v1.5` embeddings (768-dim, local), Pinecone vector store,
 BM25Okapi, Cohere `rerank-v4.0-fast`.
+
 **Corpus:** OWASP WSTG test-case pages (Markdown). Chunks keep `source`, `filename` and a
 `heading_path`; the title/ID block is merged with the first section.
 
@@ -231,6 +232,86 @@ the system loses points.
 
 ---
 
+## Part 3: Observability and Latency Monitoring
+
+The RAG pipeline is instrumented with [Langfuse](https://langfuse.com/) to inspect individual
+requests, investigate failures, and identify latency bottlenecks. Tracing is separate from the
+offline retrieval and RAGAS evaluations above: it records what happened during execution, while
+those evaluations measure retrieval and answer quality.
+
+### Tracing architecture
+
+Each end-to-end query is recorded as a root observation named `wstg-rag-query`, with child
+observations for the pipeline stages:
+
+```text
+wstg-rag-query
+├── bm25-retrieval
+├── pinecone-retrieval
+├── cohere-reranking
+├── rrf-fusion
+└── llm-generation
+```
+
+The root observation captures request-level information, including retrieval count and
+citation-validation results. The LLM generation observation records the model, generation
+parameters, input/context, generated answer, and generation timing.
+
+`flush_traces()` is called in a `finally` block so pending Langfuse observations are flushed
+when the generator exits, including error and close paths.
+
+### What is monitored
+
+| Area | What is recorded | Why it is useful |
+|---|---|---|
+| End-to-end request | Root `wstg-rag-query` latency and request metadata | Measures total RAG response time |
+| Retrieval | BM25 and Pinecone observation durations | Shows retrieval-stage latency |
+| Reranking and fusion | Cohere reranking and RRF observation durations | Helps isolate ranking-stage delays |
+| LLM generation | Model metadata, input/output, and generation duration | Helps investigate model latency and generated responses |
+| Citation validation | Validation status and cited-source count | Helps inspect citation outcomes for a response |
+| Errors | Observation error level and status message | Helps locate failed pipeline operations |
+
+### Initial latency snapshot
+
+The supplied Langfuse CSV export contains 61 observation rows, including 10 root observations
+named `wstg-rag-query`. Calculating percentiles only from those 10 root observations gives:
+
+| Scope | Root requests | p50 latency | p95 latency |
+|---|---:|---:|---:|
+| End-to-end `wstg-rag-query` | 10 | 30.98 s | 69.05 s |
+
+**How to read these values:** p50 is the median end-to-end request latency; p95 is the latency
+at or below which 95% of the sampled root requests completed. These are preliminary observations
+from a small sample, not a production performance guarantee or a stable benchmark.
+
+**Measurement scope matters.** Percentiles should be calculated after filtering Langfuse to
+`Is Root Observation = True` and `Name = wstg-rag-query` for end-to-end latency. Mixing root
+observations with child observations (such as BM25, reranking, and generation) produces a
+different distribution and should not be reported as end-to-end RAG latency.
+
+### Inference configuration
+
+- **Provider:** TokenHarbour
+- **Model:** `deepseek-v4.1-flash:free`
+- **LLM tracing:** Langfuse
+- **Monetary cost tracking:** Not currently treated as a project metric because the configured
+  model offering is free. Latency and token usage remain useful operational measurements even
+  when inference has no charge.
+
+### Current scope and next steps
+
+- End-to-end and nested stage tracing are implemented.
+- Latency can be inspected per observation in Langfuse; p50/p95 should be monitored separately
+  for the root RAG request and individual stages.
+- Increase the benchmark sample and repeat the same query workload under consistent conditions
+  before treating percentile values as a baseline.
+- Track TTFT and token usage across a larger sample to understand streaming responsiveness and
+  inference consumption.
+- Keep observability results distinct from RAGAS quality scores: latency measures speed, while
+  RAGAS measures answer and context quality.
+
+---
+
 ## Limitations
 
 - Retrieval relevance labels are at file level. They check whether the right page is found, not
@@ -291,23 +372,57 @@ python collect_retrieval_results.py --dataset data/wstg_injection_testing_eval_2
 python evaluate_retrieval_results.py --dataset data/wstg_injection_testing_eval_20.json --retrieval-dir retrieval_experiments/injection_testing --output-dir retrieval_experiments/injection_testing/evaluation
 ```
 
-**Execution order:** run the collection command first, followed by the evaluation command. The first generates retrieval results for the configured methods; the second calculates Normalized Precision@K, Recall@K, MRR@K, MAP@K, and NDCG@K. Use `--resume` on the collection command to continue an interrupted run.
+**Execution order:** run the collection command first, followed by the evaluation command. The first
+generates retrieval results for the configured methods; the second calculates Normalized
+Precision@K, Recall@K, MRR@K, MAP@K, and NDCG@K. Use `--resume` on the collection command to
+continue an interrupted run.
 
 ---
 
 ## Project Structure
 
+The tree below reflects the project Explorer. Items listed in `.gitignore` are shown separately
+as local or generated files and are not part of the tracked source tree.
+
+```text
+WSTG-RAG/
+├── .streamlit/                     # Streamlit configuration
+├── data/                           # Chunk corpus and evaluation datasets
+├── result/                         # Result artifacts
+├── app.py                          # Streamlit application
+├── clear_namespace.py              # Clear a Pinecone namespace
+├── collect_retrieval_results.py    # Collect ranked retrieval results
+├── evaluate_ragas.py               # Evaluate end-to-end answer quality
+├── evaluate_retrieval_results.py   # Calculate retrieval metrics
+├── hybrid_retriever.py             # BM25 + Pinecone + RRF + Cohere
+├── ingest.py                       # Chunk, embed, and index WSTG documents
+├── observability.py                # Langfuse tracing helper
+├── rag_pipeline.py                 # End-to-end RAG and answer generation
+├── reranker.py                     # Cohere reranking with fallback handling
+├── utils.py                        # Shared retrieval utilities
+├── requirements.txt                # Python dependencies
+├── README.md                        # Project documentation
+└── .gitignore                       # Excluded local/generated files
 ```
-├── ingest.py                      # chunk WSTG, save JSONL, index in Pinecone
-├── hybrid_retriever.py            # BM25 + Pinecone + RRF + Cohere
-├── reranker.py                    # Cohere rerank (throttle, retry, fallback)
-├── utils.py                       # chunk key for fusion/caching
-├── collect_retrieval_results.py   # Part A: save ranked results
-├── evaluate_retrieval_results.py  # Part B: compute metrics
-├── evaluate_ragas.py              # end-to-end RAGAS scoring (LLM judge via OpenRouter)
-├── average_metrics_normalized_*.csv  # averaged results per chunk config
-└── data/                          # wstg_chunks.jsonl + evaluation datasets
+
+**Local or generated items excluded by `.gitignore`:**
+
+```text
+.venv/
+wstg/
+.env
+Questions.md
+test.py
+__pycache__/
+retrieval_experiments/
+retrieval_csv_exports/
+wstg_ragas_new_30_questions
 ```
+
+The WSTG checkout, virtual environment, environment secrets, scratch test files, and generated
+experiment/export directories are kept out of the tracked project tree. The `data/`, `result/`,
+and `.streamlit/` folders are shown because they appear in the project Explorer and are not
+listed in the supplied ignore entries.
 
 ## Known Setup Gotchas
 
