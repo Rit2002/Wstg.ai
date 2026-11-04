@@ -273,9 +273,6 @@ when the generator exits, including error and close paths.
 
 ### Initial latency snapshot
 
-The supplied Langfuse CSV export contains 61 observation rows, including 10 root observations
-named `wstg-rag-query`. Calculating percentiles only from those 10 root observations gives:
-
 | Scope | Root requests | p50 latency | p95 latency |
 |---|---:|---:|---:|
 | End-to-end `wstg-rag-query` | 10 | 30.98 s | 69.05 s |
@@ -284,10 +281,6 @@ named `wstg-rag-query`. Calculating percentiles only from those 10 root observat
 at or below which 95% of the sampled root requests completed. These are preliminary observations
 from a small sample, not a production performance guarantee or a stable benchmark.
 
-**Measurement scope matters.** Percentiles should be calculated after filtering Langfuse to
-`Is Root Observation = True` and `Name = wstg-rag-query` for end-to-end latency. Mixing root
-observations with child observations (such as BM25, reranking, and generation) produces a
-different distribution and should not be reported as end-to-end RAG latency.
 
 ### Inference configuration
 
@@ -298,39 +291,9 @@ different distribution and should not be reported as end-to-end RAG latency.
   model offering is free. Latency and token usage remain useful operational measurements even
   when inference has no charge.
 
-### Current scope and next steps
-
-- End-to-end and nested stage tracing are implemented.
-- Latency can be inspected per observation in Langfuse; p50/p95 should be monitored separately
-  for the root RAG request and individual stages.
-- Increase the benchmark sample and repeat the same query workload under consistent conditions
-  before treating percentile values as a baseline.
-- Track TTFT and token usage across a larger sample to understand streaming responsiveness and
-  inference consumption.
-- Keep observability results distinct from RAGAS quality scores: latency measures speed, while
-  RAGAS measures answer and context quality.
 
 ---
 
-## Limitations
-
-- Retrieval relevance labels are at file level. They check whether the right page is found, not
-  the best passage.
-- Retrieval averages are equal-weighted across datasets, not across the 113 questions, and
-  differences between configs are small (about 0.01 or less), so treat them as indicative.
-- The RAGAS evaluation covers 29 questions, one run, and a free judge model, so treat it as a
-  health check and not a benchmark.
-- The two evaluations use different question sets, so their scores are not directly comparable.
-
-## Next Steps
-
-- Review the 8 low-correctness answers by hand to separate retrieval gaps, reference-phrasing
-  artifacts and judge noise.
-- Add passage-level relevance labels so retrieval can be scored on chunks, not files.
-- Repeat the RAGAS run, and compare against a stronger judge, to measure judge variance.
-- Grow the RAGAS question set beyond 29 so per-metric differences become resolvable.
-
----
 
 ## Setup
 
