@@ -121,19 +121,6 @@ Full-precision values: [`average_metrics_normalized_chunk256_overlap64.csv`](ave
 Cohere again leads on MRR, MAP and NDCG and ties Pinecone on precision and recall.
 Full-precision values: [`average_metrics_normalized_12_datasets.csv`](average_metrics_normalized_12_datasets.csv).
 
-### A vs B: effect of the smaller chunks
-
-Smaller chunks help only the full pipeline, and only slightly (MRR +0.0056, NDCG +0.0042).
-They lower the scores of the other two methods: Pinecone recall drops 0.8551 → 0.8458, and RRF
-MRR drops 0.8144 → 0.8030.
-
-### Retrieval takeaways
-
-1. **Reranking is worth it.** Cohere gives the best MRR, MAP and NDCG in both runs.
-2. **Chunk size matters less than the pipeline.** 256 / 64 gives the full pipeline a small gain
-   but hurts vector-only and RRF retrieval, so the best config depends on the stage.
-3. **RRF improves ranking over vector search alone** (MRR 0.8030 vs 0.7938 at 256 / 64) but has
-   slightly lower recall, so it needs the reranker to pay off.
 
 ---
 
@@ -167,68 +154,6 @@ Part 2 measures that with [RAGAS](https://github.com/explodinggradients/ragas).
 | Factual correctness | 0.6524 | 0.7400 | 0.282 | 0.060 | 1.000 |
 | Context precision | 0.6570 | 0.9167 | 0.418 | 0.000 | 1.000 |
 | Context recall | 0.5215 | 0.6667 | 0.364 | 0.000 | 1.000 |
-
-### Analysis
-
-**Generation is grounded and on topic.**
-- Faithfulness is high and tightly clustered: 21 of 29 answers score 0.9 or above, 8 are
-  perfect, and the worst is 0.76. No answer is badly unsupported by its own context.
-- Answer relevancy has a narrow range (0.68 to 0.995) with no off-topic answers. This metric
-  rarely reaches 1.0 by construction, so 0.83 should not be read as 17% irrelevant.
-
-**Correctness is the metric with real headroom.**
-- Factual correctness has a median of 0.74 but a wide spread: 7 answers score 0.9 or above, 14
-  fall between 0.5 and 0.9, and 8 fall below 0.5 (the lowest is 0.06).
-- Of those 8 low-correctness answers, 6 have faithfulness of 0.9 or above. In other words, the
-  model usually stays consistent with its context even when that answer disagrees with the
-  reference. A faithful answer built on incomplete or off-target context is still a wrong answer.
-
-**Context precision and recall are bimodal.**
-- Context precision has 12 perfect scores and 7 zeros, which is why the median (0.92) sits far
-  above the mean (0.66). Context recall has 6 perfect scores and 7 zeros.
-- Three questions score 0 on both, meaning the retrieved context contained nothing useful for
-  the reference answer. These are the clearest retrieval failures in the set.
-- Only 4 of 29 questions score 0.9 or above on both context precision and context recall.
-
-**Retrieval scores explain correctness only weakly in this sample.**
-- Pearson correlations with factual correctness are low: 0.18 for context recall and 0.23 for
-  context precision. Mean factual correctness is 0.67 when context recall is at least 0.67
-  (n = 15) and 0.63 below it (n = 14).
-- With n = 29, only the faithfulness / answer-relevancy pair (r ≈ 0.51) clearly exceeds noise.
-  The other relationships are not statistically distinguishable from zero.
-- So the data does not support the claim that retrieval alone drives answer errors. Two
-  questions with context recall below 0.5 still reach factual correctness of 0.8 or higher.
-
-**Overall.** Only 1 of 29 questions scores 0.8 or above on all five metrics, but the pattern is
-asymmetric: grounding and relevance are strong, while correctness and context coverage are where
-the system loses points.
-
-### Reliability of these numbers
-
-- **Small sample.** The standard error of the mean is about 0.05 for factual correctness, 0.07
-  for context recall and 0.08 for context precision. One question moving from 0 to 1 shifts an
-  average by about 0.03.
-- **Single run, free judge.** One pass with a free-tier judge model, so some of the variance is
-  judge noise rather than system behavior. Repeated runs or a stronger judge would tighten this.
-- **Metric limits.** Claim-level correctness is sensitive to how the reference answer is
-  phrased, so some low scores may reflect wording differences rather than wrong answers.
-
----
-
-## Combined Reading of the Results
-
-1. **The retriever is solid at page level.** Hybrid retrieval with reranking reaches 0.86
-   Recall@5 and 0.85 MRR@5, and the reranker is the single most useful component.
-2. **The generator is faithful, not necessarily correct.** High faithfulness (0.94) shows the
-   answers follow their context. Factual correctness (0.65) shows that following the context is
-   not enough when the context is incomplete.
-3. **Page-level success hides passage-level misses.** Retrieval is labeled at file level, so it
-   can score a hit even when the chunks shown to the generator lack the needed passage. The gap
-   between Part 1 (about 0.85) and RAGAS context precision and recall (0.66 and 0.52) is
-   consistent with that, although the two use different questions and definitions, so it is a
-   hypothesis and not a measurement.
-4. **Both layers are needed.** Retrieval metrics alone would have made this system look
-   stronger than its answers are.
 
 ---
 
@@ -368,24 +293,7 @@ WSTG-RAG/
 └── .gitignore                       # Excluded local/generated files
 ```
 
-**Local or generated items excluded by `.gitignore`:**
 
-```text
-.venv/
-wstg/
-.env
-Questions.md
-test.py
-__pycache__/
-retrieval_experiments/
-retrieval_csv_exports/
-wstg_ragas_new_30_questions
-```
-
-The WSTG checkout, virtual environment, environment secrets, scratch test files, and generated
-experiment/export directories are kept out of the tracked project tree. The `data/`, `result/`,
-and `.streamlit/` folders are shown because they appear in the project Explorer and are not
-listed in the supplied ignore entries.
 
 ## Known Setup Gotchas
 
