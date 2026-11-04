@@ -7,7 +7,7 @@ from openai import OpenAI
 
 from hybrid_retriever import hybrid_retrieve
 from observability import observe, flush_traces
-
+from datetime import datetime, timezone
 
 load_dotenv()
 
@@ -225,12 +225,18 @@ def generate_answer_stream(query: str, k: int = TOP_K):
                             },
                         ],
                         temperature = 0.2,
-                        stream = True
+                        stream = True,
+                        stream_options={"include_usage": True},
                     )
 
                     answer_parts = []
+                    first_token_at = None
+                    usage = None
 
                     for chunk in stream:
+
+                        if chunk.usage is not None:
+                            usage = chunk.usage
 
                         if not chunk.choices:
                             continue
@@ -238,6 +244,10 @@ def generate_answer_stream(query: str, k: int = TOP_K):
                         content = chunk.choices[0].delta.content
 
                         if content:
+
+                            if first_token_at is None:
+                                first_token_at = datetime.now(timezone.utc)
+
                             answer_parts.append(content)
                             yield {"type": "token", "content": content}
 
@@ -248,7 +258,19 @@ def generate_answer_stream(query: str, k: int = TOP_K):
                         raise RuntimeError("The model returned an empty answer.")
 
                     if generation is not None:
-                        generation.update(output=answer)
+                        generation.update(
+                            output=answer,
+                            completion_start_time=first_token_at,
+                        )
+
+                    if usage is not None:
+                        generation.update(
+                            usage_details={
+                                "input" : usage.prompt_tokens,
+                                "ouput" : usage.completion_tokens,
+                                "total" : usage.total_tokens 
+                            }
+                        )
                 
             except Exception as exc:
                 print("\n===== TOKENHARBOR ERROR =====", flush=True)
