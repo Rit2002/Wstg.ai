@@ -223,14 +223,24 @@ from a small sample, not a production performance guarantee or a stable benchmar
 ## Setup
 
 ```bash
-pip install python-dotenv rank-bm25 cohere transformers ragas \
-    langchain-core langchain-huggingface langchain-pinecone langchain-text-splitters
-# create .env with:  PINECONE_API_KEY=...   COHERE_API_KEY=...   OPENROUTER_API_KEY=...
+# 1. (Recommended) create and activate a virtual environment
+python -m venv .venv
+source .venv/bin/activate        # Windows: .venv\Scripts\activate
+
+# 2. Install dependencies from the project root
+pip install -r requirements.txt
 ```
 
-Optional overrides: `EMBEDDING_MODEL`, `PINECONE_INDEX_NAME`, `PINECONE_NAMESPACE`,
-`COHERE_RERANK_MODEL`, `WSTG_REPO_PATH`, `RAGAS_EVALUATOR_MODEL`.
+Create a `.env` file in the project root:
 
+```bash
+PINECONE_API_KEY=...
+COHERE_API_KEY=...
+OPENROUTER_API_KEY=...
+TOKENHARBOR_API_KEY=...
+LANGFUSE_SECRET_KEY=...
+LANGFUSE_PUBLIC_KEY=...
+```
 ## Run Order
 
 Replace `<dataset_path>` and `<output_dir>` with the relevant paths for each evaluation dataset.
